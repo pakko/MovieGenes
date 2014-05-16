@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	   		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	   		http://www.springframework.org/schema/context
+	   		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+			http://www.springframework.org/schema/mvc 
+			http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+
+	<bean id="propertyConfigurer" 
+	        class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	    <property name="locations">
+			<list>
+				<value>classpath:default.properties</value>
+			</list>
+		</property>
+	</bean>
+ 	
+	<!-- Activates various annotations to be detected in bean classes -->
+	<context:annotation-config />
+	
+	<!-- Scans the classpath for annotated components that will be auto-registered as Spring beans.
+	 For example @Controller and @Service. Make sure to set the correct base-package-->
+    <context:component-scan base-package="com.ml.bus"/>
+	
+	<!-- Configures the annotation-driven Spring MVC Controller programming model.
+	Note that, with Spring 3.0, this tag works in Servlet MVC only!  -->
+	<mvc:annotation-driven /> 
+	
+	<bean id="moviesDAO" class="com.ml.bus.dao.MoviesDAO" />
+	<import resource="db-mongo.xml" />
+
+	<!--
+	<bean id="categoryDAO" class="com.ml.bus.dao.CategoryMybatisDAO" />
+	<bean id="newsDAO" class="com.ml.bus.dao.NewsMybatisDAO" />
+	<bean id="crawlPatternDAO" class="com.ml.bus.dao.CrawlPatternMybatisDAO" />
+	<import resource="db-mybatis.xml" />
+	-->
+	
+</beans>  

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Movie Genes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="resources/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="resources/css/styles.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+	
+	<!--<script src="http://use.edgefonts.net/source-sans-pro.js"></script>-->
+	
+</head>
+
+<body>
+
+<div class="container">
+    <div class="row">
+        <div id="content" class="col-md-12>"></div>
+    </div>
+</div>
+
+<script src="resources/lib/jquery-1.9.1.min.js"></script>
+<script src="resources/lib/jquery.cookie.js"></script>
+
+<script src="resources/lib/underscore-min.js"></script>
+<script src="resources/lib/backbone-min.js"></script>
+<script src="resources/lib/backbone.paginator.js"></script>
+<script src="resources/bootstrap/js/bootstrap.js"></script>
+
+<script src="resources/js/app.js"></script>
+<script src="resources/js/views/common.js"></script>
+<script src="resources/js/views/movie.js"></script>
+
+
+
+
+<!-- SELECT ONE (AND ONLY ONE) OF THE DATA PERSISTENCE SOLUTIONS BELOW -->
+
+<!-- Uncomment the script below to access the application data using an in-memory data store 
+<script src="resources/js/models/model-in-memory.js"></script>-->
+
+<!-- Uncomment the script below to access the application data using RESTful services. Open model-rest.js and adjust the URL attributes to reflect your URL endpoints. -->
+<!--<script src="js/models/model-rest.js"></script>-->
+
+<!-- Uncomment the script below to access the application data using RESTful services with JSONP. Open model-rest.js and adjust the URL attributes to reflect your REST endpoints. 
+--><script src="resources/js/models/model-rest-jsonp.js"></script>
+
+<!-- Uncomment the two scripts below to use Parse.com as the data persistence layer. -->
+<!--<script src="lib/parse-1.2.2.min.js"></script>-->
+<!--<script src="js/models/model-parse-com.js"></script>-->
+
+</body>
+</html>
