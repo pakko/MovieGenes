@@ -1,8 +1,8 @@
 package com.ml.bus.service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -17,7 +17,7 @@ public class MemoryService {
 	
 	private GeneralRecommendBuilder recommendbuilder;
 	
-	private Map<String, String> movieGenres;
+	private List<String> movieGenres;
 	
 	@PostConstruct 
     public void init() throws IOException{ 
@@ -34,29 +34,29 @@ public class MemoryService {
 	}
 	
 	private void initMovieGenres() {
-		movieGenres = new HashMap<String, String>();
-		movieGenres.put("Action", "动作");
-		movieGenres.put("Adventure", "");
-		movieGenres.put("Animation", "动画");
-		movieGenres.put("Biography", "传记");
-		movieGenres.put("Comedy", "喜剧");
-		movieGenres.put("Crime", "犯罪");
-		movieGenres.put("Documentary", "纪录片");
-		movieGenres.put("Drama", "剧情");
-		movieGenres.put("Family", "家庭");
-		movieGenres.put("Fantasy", "魔幻");
-		movieGenres.put("Film-noir", "黑色幽默");
-		movieGenres.put("History", "史诗");
-		movieGenres.put("Horror", "恐怖");
-		movieGenres.put("Music", "音乐");
-		movieGenres.put("Musical", "");
-		movieGenres.put("Mystery", "");
-		movieGenres.put("Romance", "浪漫");
-		movieGenres.put("Sci-fi", "科幻");
-		movieGenres.put("Sport", "");
-		movieGenres.put("Thriller", "惊悚");
-		movieGenres.put("War", "战争");
-		movieGenres.put("Western", "");
+		movieGenres = new ArrayList<String>();
+		movieGenres.add("动作");
+		movieGenres.add("冒险");
+		movieGenres.add("动画");
+		movieGenres.add("传记");
+		movieGenres.add("喜剧");
+		movieGenres.add("犯罪");
+		movieGenres.add("纪录片");
+		movieGenres.add("剧情");
+		movieGenres.add("家庭");
+		movieGenres.add("奇幻");
+		movieGenres.add("黑色幽默");
+		movieGenres.add("史诗");
+		movieGenres.add("恐怖");
+		movieGenres.add("音乐");
+		movieGenres.add("歌舞");
+		movieGenres.add("悬疑");
+		movieGenres.add("浪漫");
+		movieGenres.add("科幻");
+		movieGenres.add("体育");
+		movieGenres.add("惊悚");
+		movieGenres.add("战争");
+		movieGenres.add("西部");
 	}
 
 	public GeneralRecommendBuilder getRecommendbuilder() {
@@ -67,14 +67,13 @@ public class MemoryService {
 		this.recommendbuilder = recommendbuilder;
 	}
 
-	public Map<String, String> getMovieGenres() {
+	public List<String> getMovieGenres() {
 		return movieGenres;
 	}
 
-	public void setMovieGenres(Map<String, String> movieGenres) {
+	public void setMovieGenres(List<String> movieGenres) {
 		this.movieGenres = movieGenres;
 	}
-	
 	
 	
 }

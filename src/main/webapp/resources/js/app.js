@@ -23,9 +23,9 @@ app.Router = Backbone.Router.extend({
         "":                 "home",
         "about":          	"about",
         "movie/:id":    	"movieDetails",
-        "movies/:genres":	"movies",
+        "movies":			"movies",
         "recommend/:id":    "recommend",
-        "login#*querystring":		"login"
+        "login#*q":			"login"
     },
 
     initialize: function () {
@@ -59,15 +59,14 @@ app.Router = Backbone.Router.extend({
         app.commonView.selectMenuItem('about-menu');
     },
     
-    movies: function (genres) {
-    	console.log(genres);
-        //if (!app.movieView) {
+    movies: function () {
+        if (!app.movieView) {
         	this.allMovies = new app.PaginatedCollection();
-        	this.allMovies.setGenres(genres);
         	this.allMovies.fetch({reset: true});
         	app.movieView = new app.MovieView({model:this.allMovies, itemViewType: "movie"});
         	app.movieView.render();
-        //}
+        }
+        
         this.$content.html(app.movieView.el);
         app.commonView.selectMenuItem('movie-menu');
     },
@@ -96,9 +95,9 @@ app.Router = Backbone.Router.extend({
         app.commonView.selectMenuItem();
     },
     
-    login: function (querystring) {
-    	//var params = parseQueryString(querystring);
-    	var params = {access_token: "c2fae6bd88c6850748f0b4389a538f15"};
+    login: function (q) {
+    	var params = parseQueryString(q);
+    	//var params = {access_token: "c2fae6bd88c6850748f0b4389a538f15"};
     	var self = this;
         $.ajax({
         	url: 'rs/user?access_token=' + params.access_token,

@@ -6,13 +6,15 @@ public class DoubanUser {
 	@Id
 	private String id;
 	private Integer marked;
+	private String userID;
 	
 	public DoubanUser(){}
 
-	public DoubanUser(String id, Integer marked) {
+	public DoubanUser(String id, Integer marked, String userID) {
 		super();
 		this.id = id;
 		this.marked = marked;
+		this.userID = userID;
 	}
 
 	public String getId() {
@@ -31,10 +33,19 @@ public class DoubanUser {
 		this.marked = marked;
 	}
 
+	public String getUserID() {
+		return userID;
+	}
+
+	public void setUserID(String userID) {
+		this.userID = userID;
+	}
+
 	@Override
 	public String toString() {
-		return "DoubanUser [id=" + id + ", marked=" + marked + "]";
+		return "DoubanUser [id=" + id + ", marked=" + marked + ", userID="
+				+ userID + "]";
 	}
-	
+
 	
 }

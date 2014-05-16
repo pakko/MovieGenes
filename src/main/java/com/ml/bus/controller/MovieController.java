@@ -1,6 +1,5 @@
 package com.ml.bus.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,12 +89,8 @@ public class MovieController {
     @RequestMapping(value = "/genres", method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody List<String> getGenres() {
     	
-    	Map<String, String> genres = memoryService.getMovieGenres();
-    	List<String> list = new ArrayList<String>(genres.size());
-    	for(String genre: genres.keySet()) {
-    		list.add(genres.get(genre));
-    	}
-		return list;
+    	List<String> genres = memoryService.getMovieGenres();
+		return genres;
     }
     
 }

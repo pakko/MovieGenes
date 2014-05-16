@@ -24,6 +24,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.ml.db.MongoDB;
 import com.ml.model.DoubanRatings;
@@ -58,7 +60,7 @@ public class UserDataCrawler {
 			in = httpConn.getInputStream();
 			
 			//for douban limitation, sleep
-			Thread.sleep(6000);
+			Thread.sleep(8000);
 			
 			return handleResponse("UTF-8", in);
 		
@@ -102,8 +104,6 @@ public class UserDataCrawler {
         return Integer.parseInt(m.replaceAll("").trim());
 	}
 	
-	private String apiUrl = "https://api.douban.com/v2/movie/subject/";
-	
 	//for simple page
 	public void parseUserRatedMovies(String html, MongoDB m, String userID)  {
 		String doubanID = null;
@@ -117,7 +117,7 @@ public class UserDataCrawler {
 	        	String date = cols.select("div.date").text();
 	        	
 	        	//get genres
-	        	String json = crawl(apiUrl + doubanID);
+	        	String json = crawl("https://api.douban.com/v2/movie/subject/" + doubanID);
 	        	ObjectMapper objectMapper = new ObjectMapper();
 	        	Map map = objectMapper.readValue(json, HashMap.class);
 	        	String href = (String) map.get("alt");
@@ -180,7 +180,7 @@ public class UserDataCrawler {
 	        	doubanID = cols.select("div.hd a").attr("href").split("/")[4];
 	        	
 	        	//get genres
-	        	String json = crawl(apiUrl + doubanID);
+	        	String json = crawl("https://api.douban.com/v2/movie/subject/" + doubanID);
 	        	ObjectMapper objectMapper = new ObjectMapper();
 	        	Map map = objectMapper.readValue(json, HashMap.class);
 	        	String href = (String) map.get("alt");
@@ -232,7 +232,16 @@ public class UserDataCrawler {
 	
 	        for (Element row: trs) {  
 	        	Elements cols = row.children();
-	        	String userID = cols.select("div.avatar").first().select("a").attr("href").split("/")[4];
+	        	String username = cols.select("div.avatar").first().select("a").attr("href").split("/")[4];
+	        	
+	        	//get user id
+	        	String json = crawl("https://api.douban.com/v2/user/" + username);
+	        	ObjectMapper objectMapper = new ObjectMapper();
+	        	Map map = objectMapper.readValue(json, HashMap.class);
+	        	String id = (String) map.get("id");
+	        	DoubanUser user = new DoubanUser(username, 0, id);
+				m.save(user, Constants.dbUserCollectionName);
+				
 	        }
 		} catch(Exception e){
 			System.err.println("error url:" + doubanID);
@@ -284,6 +293,45 @@ public class UserDataCrawler {
 		}
 	}
 	
+
+	public void transferUser(MongoDB m, List<DoubanUser> users) throws JsonParseException, JsonMappingException, IOException {
+		for(DoubanUser user: users) {
+			//get genres
+        	String json = crawl("https://api.douban.com//v2/user/" + user.getId());
+        	ObjectMapper objectMapper = new ObjectMapper();
+        	Map map = objectMapper.readValue(json, HashMap.class);
+        	String href = (String) map.get("id");
+        	m.delete(user, Constants.dbUserCollectionName);
+        	DoubanUser newUser = new DoubanUser(user.getId(), -1, href);
+			m.save(newUser, Constants.dbUserCollectionName);
+		}
+	}
+
+	private void transferMovie(MongoDB m, List<Movie> movies) throws JsonParseException, JsonMappingException, IOException {
+		String doubanID = null;
+		try{
+			for(Movie movie: movies) {
+				//get genres
+	        	String json = crawl("http://api.douban.com/v2/movie/imdb/tt" + movie.getImdbID());
+	        	if(json == null ||json.equals(""))
+	        		continue;
+	        	ObjectMapper objectMapper = new ObjectMapper();
+	        	Map map = objectMapper.readValue(json, HashMap.class);
+	        	String title = ((String) map.get("alt_title")).split("/")[0];
+	        	doubanID = ((String) map.get("alt")).split("/")[4];
+	        	List<String> genres = (List<String>) ((Map) map.get("attrs")).get("movie_type");
+	        	
+	        	m.delete(movie, Constants.movieCollectionName);
+	        	Movie newMovie = new Movie(movie.getId(), title, movie.getImdbID(), doubanID, movie.getRating(), movie.getPicUrl(), genres);
+				System.out.println(newMovie);
+	        	m.save(newMovie, Constants.movieCollectionName);
+			}
+		} catch(Exception e){
+			System.err.println("error url:" + doubanID);
+			e.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args) throws ParseException, InterruptedException, JsonParseException, JsonMappingException, IOException {
 		String confFile = Constants.defaultConfigFile;
 		Properties props = new Properties();
@@ -295,26 +343,30 @@ public class UserDataCrawler {
 		}
 		MongoDB m = new MongoDB(props);
 		UserDataCrawler jp = new UserDataCrawler();
-		
-		String userID = "3032305";
+		//List<Movie> movies = m.findAll(Movie.class, Constants.movieCollectionName);
+		List<DoubanUser> users = m.findAll(DoubanUser.class, Constants.dbUserCollectionName);
 
-		List<Movie> movies = m.findAll(Movie.class, Constants.movieCollectionName);
+		
+
+		//crawl movie
 		//jp.preprocess(movies);
 		//jp.crawlMovie(m);
 		
-		String url = "http://movie.douban.com/subject/1296736/comments";
-		String html = jp.crawl(url);
-		jp.parseUser(html, m);
+		//crawUser
+		String movieID = "1296736";
+		//jp.crawlUser(m, movieID);
 		
-		/*List<DoubanUser> users = m.findAll(DoubanUser.class, Constants.dbUserCollectionName);
-		System.out.println(users);
-		for(DoubanUser user: users) {
-			jp.crawlRatingList(m, user.getId());
-			DoubanUser newUser = new DoubanUser(user.getId(), 1);
-			m.delete(user, Constants.dbUserCollectionName);
-			m.save(newUser, Constants.dbUserCollectionName);
-		}*/
+		//transfer user, for old added users only add username
+		//jp.transferUser(m, users);
+		Query query = new Query();
+		query.addCriteria(Criteria.where("dbID").is(null));
+		List<Movie> movies = m.find(query, Movie.class, Constants.movieCollectionName);
+		System.out.println(movies.size());
 		
+		jp.transferMovie(m, movies);
+		
+		String userID = "3032305";
+		//jp.crawlRatingList(m, userID);
 		
     }
 }

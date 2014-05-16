@@ -16,6 +16,7 @@ app.MovieCollection = Backbone.Collection.extend({
 });
 
 app.PaginatedCollection = Backbone.PageableCollection.extend({
+	  url: "rs/movie?genres=all",
 	  model: app.Movie,
 	  state: {
 	    firstPage: 1,

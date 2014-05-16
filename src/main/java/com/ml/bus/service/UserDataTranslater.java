@@ -9,21 +9,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-
 import com.ml.db.MongoDB;
 import com.ml.model.DoubanRatings;
+import com.ml.model.DoubanUser;
 import com.ml.model.Movie;
 import com.ml.model.UserRattedMovies;
 import com.ml.util.Constants;
 
 public class UserDataTranslater {
 	private Map<String, Movie> movieMap;
-	private void preprocess(List<Movie> movies) {
+	private Map<String, String> userMap;
+	private void preprocess(List<Movie> movies, List<DoubanUser> users) {
 		movieMap = new HashMap<String, Movie>(movies.size());
 		for(Movie movie: movies) {
 			movieMap.put(movie.getImdbID(), movie);
+		}
+		userMap = new HashMap<String, String>(users.size());
+		for(DoubanUser user: users) {
+			userMap.put(user.getId(), user.getUserID());
 		}
 	}
 	
@@ -68,7 +71,7 @@ public class UserDataTranslater {
 			}
 
 			//2, add ratings
-			Long userID = Long.parseLong(drm.getUserID());
+			Long userID = Long.parseLong(userMap.get(drm.getUserID()));
 			Long movieID = Long.parseLong(movie.getId());
 			Double rating = drm.getDoubanRate();
 			Long timestamp = drm.getTimestamp();
@@ -87,6 +90,7 @@ public class UserDataTranslater {
 				
 	}
 	
+	
 	public static void main(String[] args) throws ParseException {
 		String confFile = Constants.defaultConfigFile;
 		Properties props = new Properties();
@@ -102,13 +106,14 @@ public class UserDataTranslater {
 		List<Movie> movies = m.findAll(Movie.class, Constants.movieCollectionName);
 		List<DoubanRatings> drms = m.findAll(DoubanRatings.class, Constants.doubanRatingsCollectionName);
 		List<UserRattedMovies> urms = m.findAll(UserRattedMovies.class, Constants.userRattedMoviesCollectionName);
+		List<DoubanUser> users = m.findAll(DoubanUser.class, Constants.dbUserCollectionName);
 
 		//process and translate
 		UserDataTranslater udt = new UserDataTranslater();
 		
 		//udt.processDup(m, movies, urms);
 		
-		udt.preprocess(movies);
+		udt.preprocess(movies, users);
 		udt.translate(m, drms);
 		
 		

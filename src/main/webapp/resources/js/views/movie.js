@@ -15,13 +15,43 @@ app.MovieView = Backbone.View.extend({
         });
     },
     
+    events: {
+        "click a": "changeGenres"
+    },
+    
+    changeGenres: function(e) {
+    	e.preventDefault();
+    	var temp = $(e.target).text();
+    	
+    	//exclude the page a click
+    	if(isNaN(temp)) {
+    		
+    		//if category not equal, reset the current page index
+    		if(temp != this.genre) {
+    			this.model.state.currentPage = 1;
+    		}
+    		
+    		this.genre = $(e.target).text();
+	    	this.model.setGenres(this.genre);
+    	}
+    	this.model.fetch({reset: true});
+    	return this;
+    },
+    
     render:function () {
     	//show #content first
     	this.$el.html(this.template());
     	
     	//show genres
+    	var self = this;
     	_.each(this.genres, function (genre) {
-    		$('#genres ul', this.el).append("<li><a href=\"#movies/" + genre + "\">" + genre + "</a></li>");
+    		if(self.genre == genre) {
+    			$('#genres ul li').removeClass('active');
+    			$('#genres ul', this.el).append("<li class=\"active\"><a href=\"#" + genre + "\">" + genre + "</a></li>");
+    		}
+    		else {
+    			$('#genres ul', this.el).append("<li><a href=\"#" + genre + "\">" + genre + "</a></li>");
+    		}
     	}, this);
     	
     	//show pagination
@@ -61,6 +91,10 @@ app.MovieItemView = Backbone.View.extend({
         var self = this;
         self.$el.find("img").on("load", { self: self }, function (event) { 
         	event.data.self.setImgSize(); 
+        });
+        //load default image
+        self.$el.find("img").on("error", { self: self }, function (event) { 
+        	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
         });
         
         return this;
