@@ -39,18 +39,6 @@ public class PreferenceResource {
 		
 		return "{\"success\": \"ok\"}";
     }
-	
-	// Refresh preferences
-	@RequestMapping(value = "", method = RequestMethod.PUT)
-	public void refreshPreferences() {
-		log.info("Refresh REST");
-		GeneralRecommendBuilder recommender = memoryService.getRecommendbuilder();
-		try {
-			recommender.refresh(null);
-		} catch (Exception e) {
-			log.info("Bad refresh");
-		}
-	}
 
 	// Delete a preference of a user
 	@RequestMapping(value = "/{userID}/{itemID}", method = RequestMethod.DELETE, produces = "application/json")

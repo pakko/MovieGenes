@@ -1,11 +1,7 @@
 package com.ml.bus.service;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,7 +12,6 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -26,16 +21,25 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
 
+import com.ml.db.IBaseDB;
 import com.ml.db.MongoDB;
 import com.ml.model.DoubanRatings;
 import com.ml.model.DoubanUser;
 import com.ml.model.Movie;
 import com.ml.util.Constants;
+import com.ml.util.CrawlUtil;
 
+@Service
 public class UserDataCrawler {
+	
+	private final String API_URL = "http://api.douban.com/v2";
+	private final String MOVIE_URL = "http://movie.douban.com";
+
 	private final String FORMAT_PATTERN = "yyyy-MM-dd";
 	private SimpleDateFormat sdf = new SimpleDateFormat(FORMAT_PATTERN);
+	
 	private Map<String, Double> rattingMap = new HashMap<String, Double>(9) {
 		private static final long serialVersionUID = 1L;
 		{
@@ -49,44 +53,6 @@ public class UserDataCrawler {
 			put("rating45-t", 4.5);
 			put("rating5-t", 5.0);
 	}};
-	
-	private String crawl(String site) {
-		HttpURLConnection httpConn = null;
-		InputStream in = null;
-		try {
-			URL url = new URL(site);
-			httpConn = (HttpURLConnection) url.openConnection();
-			httpConn.setRequestMethod("GET");
-			in = httpConn.getInputStream();
-			
-			//for douban limitation, sleep
-			Thread.sleep(8000);
-			
-			return handleResponse("UTF-8", in);
-		
-		} catch (FileNotFoundException e) {
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-			} catch (NullPointerException e) {
-			}
-			httpConn.disconnect();
-		}
-		return null;
-	}
-	
-	private String handleResponse(String charset, InputStream in) throws IOException {
-        String content = IOUtils.toString(in, charset);
-        if(content.equals(""))
-        	return null;
-        return content;
-    }
 	
 	public int getSimplePage(String content) {
 		Document doc = Jsoup.parse(content);
@@ -105,7 +71,7 @@ public class UserDataCrawler {
 	}
 	
 	//for simple page
-	public void parseUserRatedMovies(String html, MongoDB m, String userID)  {
+	public void parseUserRatedMovies(String html, IBaseDB m, String userID)  {
 		String doubanID = null;
 		try{
 	        Document doc = Jsoup.parse(html);
@@ -117,7 +83,7 @@ public class UserDataCrawler {
 	        	String date = cols.select("div.date").text();
 	        	
 	        	//get genres
-	        	String json = crawl("https://api.douban.com/v2/movie/subject/" + doubanID);
+	        	String json = CrawlUtil.crawl(API_URL + "/movie/subject/" + doubanID, null);
 	        	ObjectMapper objectMapper = new ObjectMapper();
 	        	Map map = objectMapper.readValue(json, HashMap.class);
 	        	String href = (String) map.get("alt");
@@ -134,7 +100,7 @@ public class UserDataCrawler {
 	        	}
 	        	
 	        	//get imdb id
-	        	String content = crawl(href);
+	        	String content = CrawlUtil.crawl(href, null);
 	        	Document cdoc = Jsoup.parse(content);
 	            Elements x = cdoc.select("#info a");
 	            String imdbID = null;
@@ -168,7 +134,7 @@ public class UserDataCrawler {
 		}
 	}
 	
-	public void parseMovie(String html, MongoDB m) {
+	public void parseMovie(String html, IBaseDB m) {
 		String doubanID = null;
 		try{
 	        Document doc = Jsoup.parse(html);
@@ -180,7 +146,7 @@ public class UserDataCrawler {
 	        	doubanID = cols.select("div.hd a").attr("href").split("/")[4];
 	        	
 	        	//get genres
-	        	String json = crawl("https://api.douban.com/v2/movie/subject/" + doubanID);
+	        	String json = CrawlUtil.crawl(API_URL + "/movie/subject/" + doubanID, null);
 	        	ObjectMapper objectMapper = new ObjectMapper();
 	        	Map map = objectMapper.readValue(json, HashMap.class);
 	        	String href = (String) map.get("alt");
@@ -197,7 +163,7 @@ public class UserDataCrawler {
 	        	}
 
 	        	//get imdb id
-	        	String content = crawl(href);
+	        	String content = CrawlUtil.crawl(href, null);
 	        	if(content == null)
 	        		continue;
 	        	Document cdoc = Jsoup.parse(content);
@@ -224,7 +190,7 @@ public class UserDataCrawler {
 		}
 	}
 	
-	public void parseUser(String html, MongoDB m) {
+	public void parseUser(String html, IBaseDB m) {
 		String doubanID = null;
 		try{
 	        Document doc = Jsoup.parse(html);
@@ -235,11 +201,12 @@ public class UserDataCrawler {
 	        	String username = cols.select("div.avatar").first().select("a").attr("href").split("/")[4];
 	        	
 	        	//get user id
-	        	String json = crawl("https://api.douban.com/v2/user/" + username);
+	        	String json = CrawlUtil.crawl(API_URL + "/user/" + username, null);
 	        	ObjectMapper objectMapper = new ObjectMapper();
 	        	Map map = objectMapper.readValue(json, HashMap.class);
 	        	String id = (String) map.get("id");
-	        	DoubanUser user = new DoubanUser(username, 0, id);
+	        	DoubanUser user = new DoubanUser(username, -1, id);
+	        	System.out.println(user);
 				m.save(user, Constants.dbUserCollectionName);
 				
 	        }
@@ -250,69 +217,80 @@ public class UserDataCrawler {
 	}
 	
 	private Map<String, Movie> movieMap;
-	private void preprocess(List<Movie> movies) {
+	public void preprocess(List<Movie> movies) {
 		movieMap = new HashMap<String, Movie>(movies.size());
 		for(Movie movie: movies) {
 			movieMap.put(movie.getImdbID(), movie);
 		}
 	}
 	
-	public void crawlRatingList(MongoDB m, String userID) throws ParseException {
-		String url0 = "http://movie.douban.com/people/" + userID + "/collect?start=0&sort=time&rating=all&filter=all&mode=list";
-		String content = crawl(url0);
+	//crawl user's rating movies
+	public void crawlRatingList(IBaseDB m, String userID) {
+		String url0 = MOVIE_URL + "/people/" + userID + "/collect?start=0&sort=time&rating=all&filter=all&mode=list";
+		String content = CrawlUtil.crawl(url0, null);
 		int pageNum = getSimplePage(content);
 		
 		for(int i = 0; i < pageNum; i++) {
-			String url = "http://movie.douban.com/people/" + userID + "/collect?start=" + i * 30 + "&sort=time&rating=all&filter=all&mode=list";
-			String html = crawl(url);
+			String url = MOVIE_URL + "/people/" + userID + "/collect?start=" + i * 30 + "&sort=time&rating=all&filter=all&mode=list";
+			String html = CrawlUtil.crawl(url, null);
 			parseUserRatedMovies(html, m, userID);
 		}
 	}
 	
-	public void crawlMovie(MongoDB m) throws ParseException {
-		String url0 = "http://movie.douban.com/top250";
-		String content = crawl(url0);
+	//crawl top 250 movies
+	public void crawlMovie(IBaseDB m) {
+		String url0 = MOVIE_URL + "/top250";
+		String content = CrawlUtil.crawl(url0, null);
 		int pageNum = getSimplePage(content);
 
 		for(int i = 0; i < pageNum; i++) {
-			String url = "http://movie.douban.com/top250?start=" + i * 25 + "&filter=&type=";
-			String html = crawl(url);
+			String url = MOVIE_URL + "/top250?start=" + i * 25 + "&filter=&type=";
+			String html = CrawlUtil.crawl(url, null);
 			parseMovie(html, m);
 		}
 	}
 	
-	public void crawlUser(MongoDB m, String movieID) throws ParseException {
-		String url0 = "http://movie.douban.com/subject/" + movieID + "/comments";
-		String content = crawl(url0);
+	//from movie's comments to crawl users
+	public void crawlUser(IBaseDB m, String movieID) {
+		String url0 = MOVIE_URL + "/subject/" + movieID + "/comments";
+		String content = CrawlUtil.crawl(url0, null);
 		int pageNum = getMultiPage(content);
 		
 		for(int i = 0; i < pageNum; i++) {
-			String url = "http://movie.douban.com/subject/" + movieID + "/comments?start=" + i * 20 + "&limit=20&sort=new_score";
-			String html = crawl(url);
+			String url = MOVIE_URL + "/subject/" + movieID + "/comments?start=" + i * 20 + "&limit=20&sort=new_score";
+			String html = CrawlUtil.crawl(url, null);
 			parseUser(html, m);
 		}
 	}
 	
-
-	public void transferUser(MongoDB m, List<DoubanUser> users) throws JsonParseException, JsonMappingException, IOException {
-		for(DoubanUser user: users) {
-			//get genres
-        	String json = crawl("https://api.douban.com//v2/user/" + user.getId());
-        	ObjectMapper objectMapper = new ObjectMapper();
-        	Map map = objectMapper.readValue(json, HashMap.class);
-        	String href = (String) map.get("id");
-        	m.delete(user, Constants.dbUserCollectionName);
-        	DoubanUser newUser = new DoubanUser(user.getId(), -1, href);
-			m.save(newUser, Constants.dbUserCollectionName);
+	//transfer old data to new 
+	public void transferUser(IBaseDB m, List<DoubanUser> users) {
+		String userID = null;
+		try{
+			for(DoubanUser user: users) {
+				//get genres
+	        	String json = CrawlUtil.crawl(API_URL + "/user/" + user.getId(), null);
+	        	ObjectMapper objectMapper = new ObjectMapper();
+	        	Map map = objectMapper.readValue(json, HashMap.class);
+	        	userID = (String) map.get("id");
+	        	m.delete(user, Constants.dbUserCollectionName);
+	        	DoubanUser newUser = new DoubanUser(user.getId(), -1, userID);
+	        	System.out.println(newUser);
+				m.save(newUser, Constants.dbUserCollectionName);
+			}
+		} catch(Exception e){
+			System.err.println("error url:" + userID);
+			e.printStackTrace();
 		}
 	}
 
-	private void transferMovie(MongoDB m, List<Movie> movies) throws JsonParseException, JsonMappingException, IOException {
+	//movielens data to douban movie
+	public void transferMovie(IBaseDB m, List<Movie> movies) {
 		String doubanID = null;
 		try{
 			for(Movie movie: movies) {
 				//get genres
-	        	String json = crawl("http://api.douban.com/v2/movie/imdb/tt" + movie.getImdbID());
+	        	String json = CrawlUtil.crawl(API_URL + "/movie/imdb/tt" + movie.getImdbID(), null);
 	        	if(json == null ||json.equals(""))
 	        		continue;
 	        	ObjectMapper objectMapper = new ObjectMapper();
@@ -323,6 +301,40 @@ public class UserDataCrawler {
 	        	
 	        	m.delete(movie, Constants.movieCollectionName);
 	        	Movie newMovie = new Movie(movie.getId(), title, movie.getImdbID(), doubanID, movie.getRating(), movie.getPicUrl(), genres);
+				System.out.println(newMovie);
+	        	m.save(newMovie, Constants.movieCollectionName);
+			}
+		} catch(Exception e){
+			System.err.println("error url:" + doubanID);
+			e.printStackTrace();
+		}
+	}
+	
+	//fill data that title is blank and rating is 0
+	public void transferBlankMovie(IBaseDB m, List<Movie> movies) {
+		String doubanID = null;
+		try{
+			for(Movie movie: movies) {
+				//get genres
+				doubanID = movie.getDbID();
+	        	String json = CrawlUtil.crawl(API_URL + "/movie/subject/" + doubanID, null);
+	        	if(json == null ||json.equals(""))
+	        		continue;
+	        	ObjectMapper objectMapper = new ObjectMapper();
+	        	Map map = objectMapper.readValue(json, HashMap.class);
+	        	String title = (String) map.get("title");
+	        	Object rate = ((Map) map.get("rating")).get("average");
+	        	Double doubanRate = null;
+	        	if(rate instanceof Double){
+	        		doubanRate = (Double) rate;
+	        	}
+	        	else if(rate instanceof Integer){
+	        		doubanRate = ((Integer) rate).doubleValue();
+	        	}
+	        	
+	        	m.delete(movie, Constants.movieCollectionName);
+	        	Movie newMovie = new Movie(movie.getId(), title, movie.getImdbID(), doubanID, 
+	        			doubanRate, movie.getPicUrl(), movie.getGenres());
 				System.out.println(newMovie);
 	        	m.save(newMovie, Constants.movieCollectionName);
 			}
@@ -357,13 +369,14 @@ public class UserDataCrawler {
 		//jp.crawlUser(m, movieID);
 		
 		//transfer user, for old added users only add username
-		//jp.transferUser(m, users);
+		jp.transferUser(m, users);
+		
 		Query query = new Query();
 		query.addCriteria(Criteria.where("dbID").is(null));
-		List<Movie> movies = m.find(query, Movie.class, Constants.movieCollectionName);
-		System.out.println(movies.size());
+		//List<Movie> movies = m.find(query, Movie.class, Constants.movieCollectionName);
+		//System.out.println(movies.size());
 		
-		jp.transferMovie(m, movies);
+		//jp.transferMovie(m, movies);
 		
 		String userID = "3032305";
 		//jp.crawlRatingList(m, userID);

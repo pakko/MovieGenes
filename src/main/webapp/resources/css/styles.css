@@ -82,3 +82,22 @@ body {
 	width: expression(this.width > 200 && this.width > this.height ? 200 : auto); 
 	height: expression(this.height > 300px ? 300px : auto); 
 }
+
+.common-movies {
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis; 
+}
+.recommend-movies {
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis; 
+}
+
+#moviehead {
+	display: none;
+	padding-left: 10px;
+	align: right;
+	color: grey;
+	font-size: 24px;
+}

@@ -1,16 +1,15 @@
 package com.ml.movie.recommender;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.mahout.cf.taste.common.NoSuchItemException;
 import org.apache.mahout.cf.taste.common.NoSuchUserException;
-import org.apache.mahout.cf.taste.common.Refreshable;
 import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastIDSet;
+import org.apache.mahout.cf.taste.impl.common.LongPrimitiveIterator;
 import org.apache.mahout.cf.taste.impl.neighborhood.NearestNUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.similarity.EuclideanDistanceSimilarity;
@@ -18,17 +17,13 @@ import org.apache.mahout.cf.taste.impl.similarity.LogLikelihoodSimilarity;
 import org.apache.mahout.cf.taste.impl.similarity.PearsonCorrelationSimilarity;
 import org.apache.mahout.cf.taste.impl.similarity.SpearmanCorrelationSimilarity;
 import org.apache.mahout.cf.taste.impl.similarity.TanimotoCoefficientSimilarity;
-import org.apache.mahout.cf.taste.model.DataModel;
 import org.apache.mahout.cf.taste.neighborhood.UserNeighborhood;
-import org.apache.mahout.cf.taste.recommender.IDRescorer;
 import org.apache.mahout.cf.taste.recommender.RecommendedItem;
-import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.apache.mahout.cf.taste.similarity.UserSimilarity;
 
-public class GeneralRecommendBuilder implements Recommender {
+public class GeneralRecommendBuilder {
 	// Class logger
-	private static final Logger log = LoggerFactory
-			.getLogger(MongoDBDataModel.class);
+	private static final Logger log = LoggerFactory.getLogger(GeneralRecommendBuilder.class);
 
 	/**
 	 * Default user threshold
@@ -118,23 +113,11 @@ public class GeneralRecommendBuilder implements Recommender {
 				similarity = new EuclideanDistanceSimilarity(this.dataModel);
 			}
 			if (neighborhoodType.equals("threshold")) {
-				neighborhood = new ThresholdUserNeighborhood(userThreshold,
-						similarity, dataModel);
+				neighborhood = new ThresholdUserNeighborhood(userThreshold, similarity, dataModel);
 			} else {
-				neighborhood = new NearestNUserNeighborhood(neighborsNumber,
-						similarity, this.dataModel);
+				neighborhood = new NearestNUserNeighborhood(neighborsNumber, similarity, this.dataModel);
 			}
-			recommender = new MovieUserBasedRecommender(this.dataModel,
-					neighborhood, similarity);
-		} catch (Exception e) {
-			log.error("Error while starting recommender.", e);
-		}
-	}
-	
-	public void build2() {
-		try {
-			DataModel dataModel = new MovieFileDataModel();
-			recommender = new MovieUserBasedRecommender(dataModel);
+			recommender = new MovieUserBasedRecommender(this.dataModel, neighborhood, similarity);
 		} catch (Exception e) {
 			log.error("Error while starting recommender.", e);
 		}
@@ -143,10 +126,9 @@ public class GeneralRecommendBuilder implements Recommender {
 	/**
 	 * Returns a list of recommended users IDs for the given user ID
 	 */
-	public List<List<String>> recommend(String id,
-			Iterable<List<String>> items, boolean recommendUsers)
-			throws NullPointerException, NoSuchUserException,
-			NoSuchItemException, IllegalArgumentException {
+	public List<List<String>> recommend(String id, Iterable<List<String>> items, boolean recommendUsers)
+			throws NullPointerException, NoSuchUserException, NoSuchItemException, IllegalArgumentException {
+		
 		long userID = Long.parseLong(id);
 		try {
 			FastIDSet userItems = dataModel.getItemIDsFromUser(userID);
@@ -215,46 +197,42 @@ public class GeneralRecommendBuilder implements Recommender {
 			NoSuchItemException, IllegalArgumentException {
 		dataModel.refreshData(userID, items, add);
 	}
-
-	@Override
-	public void refresh(Collection<Refreshable> arg0) {
-		dataModel.refresh(arg0);
+	
+	public long[] mostSimilarUserIDs(String id) throws TasteException {
+		long userID = Long.parseLong(id);
+		return neighborhood.getUserNeighborhood(userID);
 	}
-
-	@Override
-	public float estimatePreference(long arg0, long arg1) throws TasteException {
-		// TODO Auto-generated method stub
-		return 0;
+	
+	public long[] getCommonItems(long userID, long otherUserID) throws TasteException {
+		FastIDSet userItems = dataModel.getItemIDsFromUser(userID);
+		FastIDSet otherUserItems = dataModel.getItemIDsFromUser(otherUserID);
+		userItems.retainAll(otherUserItems);
+		
+		LongPrimitiveIterator it = userItems.iterator();
+		long[] commons = new long[userItems.size()];
+		
+		int i = 0;
+		while(it.hasNext()) {
+			commons[i++] = it.next();
+		}
+		return commons;
 	}
-
-	@Override
-	public DataModel getDataModel() {
-		return dataModel;
+	
+	public long[] getRecommendItems(FastIDSet items, long otherUserID) throws TasteException {
+		FastIDSet otherUserItems = dataModel.getItemIDsFromUser(otherUserID);
+		otherUserItems.retainAll(items);
+		
+		LongPrimitiveIterator it = otherUserItems.iterator();
+		long[] commons = new long[otherUserItems.size()];
+		
+		int i = 0;
+		while(it.hasNext()) {
+			commons[i++] = it.next();
+		}
+		return commons;
 	}
-
-	@Override
-	public List<RecommendedItem> recommend(long userID, int howMany)
-			throws TasteException {
-		return recommender.recommend(userID, howMany);
-	}
-
-	@Override
-	public List<RecommendedItem> recommend(long arg0, int arg1, IDRescorer arg2)
-			throws TasteException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void removePreference(long arg0, long arg1) throws TasteException {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void setPreference(long arg0, long arg1, float arg2)
-			throws TasteException {
-		// TODO Auto-generated method stub
-
+	
+	public double getUserSimilarity(long userID, long otherUserID) throws TasteException {
+		return similarity.userSimilarity(userID, otherUserID);
 	}
 }

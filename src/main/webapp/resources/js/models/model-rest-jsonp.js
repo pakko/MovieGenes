@@ -15,7 +15,7 @@ app.MovieCollection = Backbone.Collection.extend({
     url: "rs/movie/search"
 });
 
-app.PaginatedCollection = Backbone.PageableCollection.extend({
+app.ServerPaginatedCollection = Backbone.PageableCollection.extend({
 	  url: "rs/movie?genres=all",
 	  model: app.Movie,
 	  state: {
@@ -39,8 +39,24 @@ app.PaginatedCollection = Backbone.PageableCollection.extend({
 	  },
 	  
 	  parseRecords: function (resp, options) {
+		  console.log(resp);
 		  return resp.items;
 	  }
+});
+
+app.ClientPaginatedCollection = Backbone.PageableCollection.extend({
+    mode: "client",
+    state: {
+	    firstPage: 1,
+	    currentPage: 1,
+	    pageSize: 5
+	},
+    parseState: function (resp, queryParams, state, options) {
+	    return {totalRecords: resp.totalRecords, totalPages: resp.totalPages, currentPage: resp.currentPage};
+	},
+    parseRecords: function (resp, options) {
+		  return resp.items;
+	}
 });
 
 /*

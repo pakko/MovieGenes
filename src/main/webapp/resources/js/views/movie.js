@@ -16,7 +16,20 @@ app.MovieView = Backbone.View.extend({
     },
     
     events: {
-        "click a": "changeGenres"
+        "click a": "changeGenres",
+        "click button": "showMore"
+    },
+    
+    showMore: function(e) {
+    	e.preventDefault();
+    	var data = $(e.target).attr('data');
+    	if ($('.display-' + data).is(":visible") == false) {
+    		$('.display-' + data).show();
+	    }
+	    else {
+	    	$('.display-' + data).hide();
+	    }
+    	return this;
     },
     
     changeGenres: function(e) {
@@ -58,6 +71,9 @@ app.MovieView = Backbone.View.extend({
     	$('#pagination', this.el).html(new app.PaginatorView({collection: this.model}).render().el);
 
     	//show movie list
+    	if(this.options.itemViewType == "recommend") {
+    		$('#moviehead').show();
+    	}
         _.each(this.model.models, function (movie) {
         	if(this.options.itemViewType == "movie") {
         		$('#movieList', this.el).append(new app.MovieItemView({model:movie}).render().el);
@@ -75,6 +91,10 @@ app.MovieItemView = Backbone.View.extend({
 
 	tagName:"div",
     className:'col-sm-4 col-md-2',
+    
+    initialize: function () {
+    	$('.collapse').collapse();
+    },
     
     setImgSize: function () {
     	$('.plain img').each(function() {
@@ -103,8 +123,8 @@ app.MovieItemView = Backbone.View.extend({
 
 app.RecommendItemView = Backbone.View.extend({
 
-	tagName:"div",
-    className:'col-sm-4 col-md-2',
+	//tagName:"div",
+    //className:'col-sm-4 col-md-2',
     
     setImgSize: function () {
     	$('.plain img').each(function() {
@@ -116,6 +136,8 @@ app.RecommendItemView = Backbone.View.extend({
     render:function () {
         var data = _.clone(this.model.attributes);
         data.id = this.model.id;
+        
+        
         this.$el.html(this.template(data));
         
         var self = this;

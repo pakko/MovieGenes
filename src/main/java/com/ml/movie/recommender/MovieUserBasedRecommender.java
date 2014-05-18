@@ -52,21 +52,17 @@ public class MovieUserBasedRecommender implements Recommender {
 	 */
 	public MovieUserBasedRecommender(DataModel model) throws TasteException {
 		UserSimilarity userSimilarity = new PearsonCorrelationSimilarity(model);
-		userSimilarity.setPreferenceInferrer(new AveragingPreferenceInferrer(
-				model));
-		UserNeighborhood neighborhood = new NearestNUserNeighborhood(10,
-				userSimilarity, model);
+		userSimilarity.setPreferenceInferrer(new AveragingPreferenceInferrer(model));
+		UserNeighborhood neighborhood = new NearestNUserNeighborhood(10, userSimilarity, model);
 
-		recommender = new GenericUserBasedRecommender(model, neighborhood,
-				userSimilarity);
+		recommender = new GenericUserBasedRecommender(model, neighborhood, userSimilarity);
 	}
 
 	public MovieUserBasedRecommender(DataModel model,
 			UserNeighborhood neighborhood, UserSimilarity userSimilarity)
 			throws TasteException {
 
-		recommender = new GenericUserBasedRecommender(model, neighborhood,
-				userSimilarity);
+		recommender = new GenericUserBasedRecommender(model, neighborhood, userSimilarity);
 	}
 
 	public List<RecommendedItem> recommend(long userID, int howMany)

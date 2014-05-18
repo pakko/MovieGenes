@@ -61,7 +61,7 @@ app.Router = Backbone.Router.extend({
     
     movies: function () {
         if (!app.movieView) {
-        	this.allMovies = new app.PaginatedCollection();
+        	this.allMovies = new app.ServerPaginatedCollection();
         	this.allMovies.fetch({reset: true});
         	app.movieView = new app.MovieView({model:this.allMovies, itemViewType: "movie"});
         	app.movieView.render();
@@ -73,7 +73,7 @@ app.Router = Backbone.Router.extend({
     
     recommend: function (id) {
         if (!app.recommendView) {
-        	this.recommendMovies = new app.PaginatedCollection();
+        	this.recommendMovies = new app.ClientPaginatedCollection();
         	this.recommendMovies.url = "rs/recommend/user/" + id + "/items";
         	this.recommendMovies.fetch({reset: true});
         	app.recommendView = new app.MovieView({model:this.recommendMovies, itemViewType: "recommend"});

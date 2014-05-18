@@ -1,11 +1,61 @@
-<div class="thumbnail plain">
-	<a href='http://www.imdb.com/title/tt<%= imdbID %>' target="_blank">
-	    <img src="<%= picUrl %>"/>
-	</a>
-	<div class="caption text-center">
-		<p class="title"><sup><span class="rate"><%= rating %></span></sup> <%= title %> </p>
-		<!--<p class="title"><%= title %></p>
-		<p class="rate"><%= rating %></p>
-		<p> <a href="#" class="btn btn-primary" role="button">Like</a> </p>-->
-	</div>
-</div>
+<dl class="dl-horizontal">
+    <dt>
+	    <p><%=userName%> 相似度<span style="color: red;"><%=userSimilarity%></span></p>
+	    <p>共同看过的电影: </p>
+	    <div class="common-movies">
+	    <% _.each( commons, function( item, index ){ 
+			if(index == 3) {
+		%>
+			<span>...</span>
+		<% } else if(index <= 2) { %>
+		<span>
+		    <a href='#movie/<%= item.id %>'><img width="50px" height="70px" src="<%=item.picUrl%>" alt="<%=item.title%>" /></a>
+		</span>
+		<% } }); %>
+		</div>
+    </dt>
+    
+    <dd>
+    	<div class="recommend-movies">
+		<% _.each( recommendItems, function( item, index ){
+			if(index <= 3) { 
+		%>
+			<div class="col-sm-4 col-md-2">
+			<div class="thumbnail plain">
+				<a href='#movie/<%= item.id %>'>
+				    <img src="<%= item.picUrl %>"/>
+				</a>
+				<div class="caption text-center">
+					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
+				</div>
+			</div>
+			</div>
+		<% } else if(index == 4) { %>
+			<div class="col-sm-4 col-md-2">
+			<div class="thumbnail plain">
+				<a href='#movie/<%= item.id %>'>
+				    <img src="<%= item.picUrl %>"/>
+				</a>
+				<div class="caption text-center">
+					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
+				</div>
+			</div>
+			</div>
+			<p style="line-height: 239px; vertical-align: middle;"><button class="btn" data="<%=userName%>">More...</button></p>
+		<% } else { %>
+			<div class="col-sm-4 col-md-2">
+			<div class="thumbnail plain display-<%=userName%>" style="display: none;">
+				<a href='#movie/<%= item.id %>'>
+				    <img src="<%= item.picUrl %>"/>
+				</a>
+				<div class="caption text-center">
+					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
+				</div>
+			</div>
+			</div>
+		<% } }); %>
+		</div>
+	</dd>
+</dl>
+
+
