@@ -19,12 +19,15 @@ public class MemoryService {
 	
 	private List<String> movieGenres;
 	
+	private List<String> recommendItemsInStore;
+	
 	@PostConstruct 
     public void init() throws IOException{ 
 		initRecommendBuilder();
 		
 		initMovieGenres();
 		
+		recommendItemsInStore = new ArrayList<String>();
     }
 	
 	private void initRecommendBuilder() {
@@ -73,6 +76,14 @@ public class MemoryService {
 
 	public void setMovieGenres(List<String> movieGenres) {
 		this.movieGenres = movieGenres;
+	}
+
+	public List<String> getRecommendItemsInStore() {
+		return recommendItemsInStore;
+	}
+
+	public void setRecommendItemsInStore(List<String> recommendItemsInStore) {
+		this.recommendItemsInStore = recommendItemsInStore;
 	}
 	
 	

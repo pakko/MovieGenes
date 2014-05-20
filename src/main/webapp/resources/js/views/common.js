@@ -1,4 +1,8 @@
+
+
 app.AboutView = Backbone.View.extend({
+	destroy:function () {
+    },
     render:function () {
         $(this.el).html(this.template());
         return this;
@@ -6,6 +10,8 @@ app.AboutView = Backbone.View.extend({
 });
 
 app.HomeView = Backbone.View.extend({
+	destroy:function () {
+    },
     render:function () {
         $(this.el).html(this.template());
         return this;
