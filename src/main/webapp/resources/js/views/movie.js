@@ -1,9 +1,38 @@
 app.MovieView = Backbone.View.extend({
 	
+	setModel: function( model) {
+	    // unbind all view related things
+	    this.$el.children().removeData().unbind();
+	    this.$el.children().remove();
+	    this.stopListening();
+
+	    // clear model
+	    if ( this.model) {
+	        this.model.unbind();
+	        this.model.stopListening();        
+	    }
+
+	    // set new model and call initialize
+	    this.model = model;
+	    this.delegateEvents( this.events);    // will call undelegateEvents internally      
+	    this.initialize();
+	},  
+
+	destroy:function () {
+    },
+    
 	initialize:function () {
+		this.model = new app.ServerPaginatedCollection();
+    	this.model.setGenres("所有");
+    	this.model.fetch({reset: true});
+    	
+		var self = this;
+		/*this.model.on('request', function() {
+			self.$el.html("loading...");
+        }),*/
         this.model.on("reset", this.render, this);
         
-        var self = this;
+        
         $.ajax({
         	url: 'rs/movie/genres',
         	type: 'GET',
@@ -16,72 +45,93 @@ app.MovieView = Backbone.View.extend({
     },
     
     events: {
-        "click a": "changeGenres",
-        "click button": "showMore"
+        "click .genres": 	"changeGenres",
+        "mouseenter .test1":	"starHoverEnter2",
+        "mouseleave .test1":	"starHoverLeave2",
     },
     
-    showMore: function(e) {
-    	e.preventDefault();
-    	var data = $(e.target).attr('data');
-    	if ($('.display-' + data).is(":visible") == false) {
-    		$('.display-' + data).show();
-	    }
-	    else {
-	    	$('.display-' + data).hide();
-	    }
-    	return this;
+    starHoverEnter2: function(e) {
+    	$(e.currentTarget).find('.caption-btm2').slideDown(250); //.fadeIn(250)
+    },
+    
+    starHoverLeave2: function(e) {
+    	$(e.currentTarget).find('.caption-btm2').slideUp(205); //.fadeOut(205)
     },
     
     changeGenres: function(e) {
     	e.preventDefault();
-    	var temp = $(e.target).text();
-    	
-    	//exclude the page a click
-    	if(isNaN(temp)) {
-    		
-    		//if category not equal, reset the current page index
-    		if(temp != this.genre) {
-    			this.model.state.currentPage = 1;
-    		}
-    		
-    		this.genre = $(e.target).text();
-	    	this.model.setGenres(this.genre);
-    	}
+    	var temp = $(e.currentTarget).text();
+		//if category not equal, reset the current page index
+		if(temp != this.genre) {
+			this.model.state.currentPage = 1;
+		}
+		this.genre = temp;
+    	this.model.setGenres(this.genre);
     	this.model.fetch({reset: true});
     	return this;
+    },
+    
+    ratyed: function () {
+    	//rated star action
+        $('.caption-btm2').raty({
+        	 width: '100%',
+        	 path: 'resources/img',
+        	 score: function() {
+        		    return $(this).attr('data-score');
+        	 },
+        	 click: function(score) {
+        		var userId = $("#userId").attr('data');
+        		if(typeof userId == 'undefined')
+        			alert("请先登录！");
+        		
+        		var itemId = $(this).attr('data');
+        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		
+        		$.ajax({
+                	url: url,
+                	type: 'POST',
+                	dataType: 'json',
+                    async: false
+                });
+	    	 }
+    	});
     },
     
     render:function () {
     	//show #content first
     	this.$el.html(this.template());
-    	
+
     	//show genres
     	var self = this;
     	_.each(this.genres, function (genre) {
     		if(self.genre == genre) {
     			$('#genres ul li').removeClass('active');
-    			$('#genres ul', this.el).append("<li class=\"active\"><a href=\"#" + genre + "\">" + genre + "</a></li>");
+    			$('#genres ul', this.el).append("<li class=\"active genres\"><a href=\"#" + genre + "\">" + genre + "</a></li>");
     		}
     		else {
-    			$('#genres ul', this.el).append("<li><a href=\"#" + genre + "\">" + genre + "</a></li>");
+    			$('#genres ul', this.el).append("<li class=\"genres\"><a href=\"#" + genre + "\">" + genre + "</a></li>");
     		}
     	}, this);
     	
     	//show pagination
     	$('#pagination', this.el).html(new app.PaginatorView({collection: this.model}).render().el);
 
-    	//show movie list
-    	if(this.options.itemViewType == "recommend") {
-    		$('#moviehead').show();
-    	}
         _.each(this.model.models, function (movie) {
-        	if(this.options.itemViewType == "movie") {
-        		$('#movieList', this.el).append(new app.MovieItemView({model:movie}).render().el);
-        	}
-        	else if(this.options.itemViewType == "recommend") {
-        		$('#movieList', this.el).append(new app.RecommendItemView({model:movie}).render().el);
-        	}
+        	$('#movieList', this.el).append(new app.MovieItemView({model:movie}).render().el);
         }, this);
+        
+        //resize image
+        $('#movieList', this.el).find(".plain img").on("load", { self: self }, function (event) { 
+        	$(event.currentTarget).css("width", "108px"); 
+        	$(event.currentTarget).css("height", "160px");
+        });
+        //load default image
+        $('#movieList', this.el).find(".plain img").on("error", { self: self }, function (event) { 
+        	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
+        });
+        
+        this.ratyed();
+        
         return this;
     }
 
@@ -96,55 +146,11 @@ app.MovieItemView = Backbone.View.extend({
     	$('.collapse').collapse();
     },
     
-    setImgSize: function () {
-    	$('.plain img').each(function() {
-    		$(this).css("width", "108px"); 
-	        $(this).css("height", "160px"); 
-    	});
-    },
-    
     render:function () {
         var data = _.clone(this.model.attributes);
         data.id = this.model.id;
         this.$el.html(this.template(data));
         
-        var self = this;
-        self.$el.find("img").on("load", { self: self }, function (event) { 
-        	event.data.self.setImgSize(); 
-        });
-        //load default image
-        self.$el.find("img").on("error", { self: self }, function (event) { 
-        	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
-        });
-        
-        return this;
-    }
-});
-
-app.RecommendItemView = Backbone.View.extend({
-
-	//tagName:"div",
-    //className:'col-sm-4 col-md-2',
-    
-    setImgSize: function () {
-    	$('.plain img').each(function() {
-    		$(this).css("width", "108px"); 
-	        $(this).css("height", "160px"); 
-    	});
-    },
-    
-    render:function () {
-        var data = _.clone(this.model.attributes);
-        data.id = this.model.id;
-        
-        
-        this.$el.html(this.template(data));
-        
-        var self = this;
-        self.$el.find("img").on("load", { self: self }, function (event) { 
-        	event.data.self.setImgSize(); 
-        });
-
         return this;
     }
 });
@@ -152,6 +158,10 @@ app.RecommendItemView = Backbone.View.extend({
 //movie details
 app.MovieDetailsView = Backbone.View.extend({
 
+	initialize: function () {
+		
+	},
+	
     render: function () {
     	//show movie details
         this.$el.html(this.template(this.model.attributes));

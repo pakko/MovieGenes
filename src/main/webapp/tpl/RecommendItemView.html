@@ -1,6 +1,7 @@
 <dl class="dl-horizontal">
     <dt>
-	    <p><%=userName%> 相似度<span style="color: red;"><%=userSimilarity%></span></p>
+	    <p>用户<span style="color: blue;"><%=userName%></span></p>
+	    <p>与您的相似度<span style="color: red;"><%=userSimilarity%></span></p>
 	    <p>共同看过的电影: </p>
 	    <div class="common-movies">
 	    <% _.each( commons, function( item, index ){ 
@@ -9,7 +10,7 @@
 			<span>...</span>
 		<% } else if(index <= 2) { %>
 		<span>
-		    <a href='#movie/<%= item.id %>'><img width="50px" height="70px" src="<%=item.picUrl%>" alt="<%=item.title%>" /></a>
+		    <a href='#movie/<%= item.id %>'><img width="50px" height="70px" src="<%=item.picUrl%>" title="<%=item.title%>" /></a>
 		</span>
 		<% } }); %>
 		</div>
@@ -17,25 +18,30 @@
     
     <dd>
     	<div class="recommend-movies">
+    	<% if(recommendItems.length == 0) { %>
+    		<p style="line-height: 239px; align: center; vertical-align: middle;">No data.</p>
+    	<% } %>
 		<% _.each( recommendItems, function( item, index ){
 			if(index <= 3) { 
 		%>
 			<div class="col-sm-4 col-md-2">
-			<div class="thumbnail plain">
+			<div class="thumbnail plain test2">
 				<a href='#movie/<%= item.id %>'>
-				    <img src="<%= item.picUrl %>"/>
+				    <img src="<%= item.picUrl %>" title="<%=item.title%>"/>
 				</a>
+				<div class="caption-btm" data="<%= item.id %>" data-score=""></div>
 				<div class="caption text-center">
 					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
 				</div>
 			</div>
 			</div>
-		<% } else if(index == 4) { %>
+		<% } else if(index == 4 && recommendItems.length != 5) { %>
 			<div class="col-sm-4 col-md-2">
-			<div class="thumbnail plain">
+			<div class="thumbnail plain test2">
 				<a href='#movie/<%= item.id %>'>
 				    <img src="<%= item.picUrl %>"/>
 				</a>
+				<div class="caption-btm" data="<%= item.id %>" data-score=""></div>
 				<div class="caption text-center">
 					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
 				</div>
@@ -44,10 +50,11 @@
 			<p style="line-height: 239px; vertical-align: middle;"><button class="btn" data="<%=userName%>">More...</button></p>
 		<% } else { %>
 			<div class="col-sm-4 col-md-2">
-			<div class="thumbnail plain display-<%=userName%>" style="display: none;">
+			<div class="thumbnail plain test2 display-<%=userName%>" style="display: none;">
 				<a href='#movie/<%= item.id %>'>
 				    <img src="<%= item.picUrl %>"/>
 				</a>
+				<div class="caption-btm" data="<%= item.id %>" data-score=""></div>
 				<div class="caption text-center">
 					<p class="title"><sup><span class="rate"><%= item.rating %></span></sup> <%= item.title %> </p>
 				</div>

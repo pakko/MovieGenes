@@ -227,7 +227,9 @@ public class GeneralRecommendBuilder {
 		
 		int i = 0;
 		while(it.hasNext()) {
-			commons[i++] = it.next();
+			long v = it.next();
+			commons[i++] = v;
+			items.remove(v);	//also remove from items for display redundant value
 		}
 		return commons;
 	}

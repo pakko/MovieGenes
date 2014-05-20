@@ -28,7 +28,7 @@
       <% if (typeof logined == "undefined") { %>
       	<li><a href="<%=loginUrl %>"><img src="resources/img/login_with_douban_24.png" /></a></li>
       <% } else {%>
-        <li><a href="#<%=id %>"><img width="24px" height="24px" src="<%=avatar %>" /> <%=name %></a></li>
+        <li><a id="userId" data="<%=id %>"><img width="24px" height="24px" src="<%=avatar %>" /> <%=name %></a></li>
       <% } %>
       </ul>
       

@@ -36,7 +36,7 @@ public class MovieController {
     	String genres = servletRequest.getParameter("genres");
     	System.out.println(genres);
     	Pagination pager = new Pagination(servletRequest);
-    	if(genres.equals("all")) {
+    	if(genres.equals("所有")) {
     		movieService.findByPage(pager);
     	}
     	else {

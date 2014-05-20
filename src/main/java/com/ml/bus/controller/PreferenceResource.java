@@ -26,8 +26,6 @@ public class PreferenceResource {
 	@Autowired
 	private MemoryService memoryService;
 
-	static String XMLDeclaration = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-
 	// Create a preference of a user
 	@RequestMapping(value = "/{userID}/{itemID}/{weight}", method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody String findById(

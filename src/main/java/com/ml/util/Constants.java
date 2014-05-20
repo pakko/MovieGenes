@@ -14,6 +14,7 @@ public class Constants {
 	public static final String userTaggedMoviesCollectionName = "userTaggedMovies";
 	public static final String doubanRatingsCollectionName = "doubanRatings";
 	public static final String dbUserCollectionName = "dbuser";
+	public static final String recommendCollectionName = "recommend";
 
 	public static final String movieFilePath = currentDir + separator + "movies.dat";
 	public static final String userRattedMoviesFilePath = currentDir + separator + "user_ratedmovies-timestamps.dat";

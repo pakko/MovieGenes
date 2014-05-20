@@ -32,6 +32,7 @@
 	
 	<bean id="moviesDAO" class="com.ml.bus.dao.MoviesDAO" />
 	<bean id="userDAO" class="com.ml.bus.dao.UserDAO" />
+	<bean id="recommendDAO" class="com.ml.bus.dao.RecommendDAO" />
 	
 	<import resource="db-mongo.xml" />
 

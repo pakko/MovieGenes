@@ -577,7 +577,7 @@ public final class MongoDBDataModel implements DataModel {
 			user.put(mongoUserID, Long.parseLong(userID));
 			user.put(mongoItemID, Long.parseLong(itemID));
 			user.put(mongoPreference, Double.parseDouble(preferenceValue));
-			user.put(mongoTimestampAdd, mongoTimestamp);
+			user.put(mongoTimestampAdd, mongoTimestamp.getTime());
 			collection.insert(user);
 			log.info("Adding userID: {} itemID: {} preferenceValue: {}",
 					userID, itemID, preferenceValue);

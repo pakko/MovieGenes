@@ -1,82 +1,39 @@
-
-
-app.AboutView = Backbone.View.extend({
-	destroy:function () {
-    },
-    render:function () {
-        $(this.el).html(this.template());
-        return this;
+window.Movie = Backbone.Model.extend({
+	urlRoot:"rs/movie/",
+    initialize:function () {
+        this.url = this.urlRoot + "/" + this.id;
     }
 });
 
-app.HomeView = Backbone.View.extend({
-	destroy:function () {
-    },
-    render:function () {
-        $(this.el).html(this.template());
-        return this;
-    }
+window.MovieCollection = Backbone.Collection.extend({
+	url: 'rs/movie/search'
 });
 
-app.CommonView = Backbone.View.extend({
-	initialize: function () {
-        this.searchResults = new app.MovieCollection();
-        this.searchresultsView = new app.MovieSidebarListView({model: this.searchResults, className: 'dropdown-menu'});
-        
-        var AUTHORIZATION_URL = 'https://www.douban.com/service/auth2/auth';
-        var api = { apiKey: '0c30729c836d5bf4249157d58a4813dc', apiSecret: '3925b34a145e3415' };
-        var callbackUrl = "http://localhost:8203/#login";
-        var params = $.param({ client_id: api.apiKey,
-        	redirect_uri: callbackUrl,
-        	response_type: 'token',
-        	scope: 'shuo_basic_r,shuo_basic_w,douban_basic_common'});
-        this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
-        
-    },
-
-    login: function (info) {
-    	//use cookie to record
-    	var data = {logined: true, avatar: info.avatar, name: info.name, id: info.id};
-    	$.cookie("loginData", JSON.stringify(data));
-    	this.render();
-    },
-    
-    render: function () {
-    	this.data = $.cookie("loginData") ? JSON.parse($.cookie("loginData")) : {loginUrl: this.authorizationUrl};
-        this.$el.html(this.template(this.data));
-        $('.navbar-search', this.el).append(this.searchresultsView.render().el);
-        return this;
-    },
-
-    events: {
-        "keyup .search-query": "search",
-        "keypress .search-query": "onkeypress"
-    },
-
-    search: function (event) {
-        var key = $('#searchText').val();
-        this.searchResults.fetch({reset: true, data: {name: key}});
-        var self = this;
-        setTimeout(function () {
-            $('.dropdown').addClass('open');
-        });
-    },
-
-    onkeypress: function (event) {
-        if (event.keyCode === 13) { // enter key pressed
-            event.preventDefault();
-        }
-    },
-
-    selectMenuItem: function(menuItem) {
-        $('.navbar .nav li').removeClass('active');
-        if (menuItem) {
-            $('.' + menuItem).addClass('active');
-        }
-    }
+window.ServerPaginatedCollection = Backbone.PageableCollection.extend({
+	  state: {
+	    firstPage: 1,
+	    currentPage: 1,
+	    pageSize: 18
+	  },
+	  queryParams: {
+	    currentPage: "currentPage",
+	    pageSize: "limitSize",
+	    sortField: "id",
+	    sortOrder: "desc"
+	  },
+	  setGenres: function (genres) {
+		  this.url = this.urlRoot + "?genres=" + genres;
+	  },
+	  parseState: function (resp, queryParams, state, options) {
+          return {totalRecords: resp.totalRecords, totalPages: resp.totalPages, currentPage: resp.currentPage};
+	  },
+	  parseRecords: function (resp, options) {
+		  return resp.items;
+	  }
 });
 
-app.PageHandleView = Backbone.View.extend({
+
+window.PageHandleView = Backbone.View.extend({
 
     /** @property */
     tagName: "li",
@@ -224,7 +181,7 @@ app.PageHandleView = Backbone.View.extend({
 
      @class Backgrid.Extension.Paginator
   */
-app.PaginatorView = Backbone.View.extend({
+window.PaginatorView = Backbone.View.extend({
 
     /** @property */
     className: "backgrid-paginator",
@@ -278,7 +235,7 @@ app.PaginatorView = Backbone.View.extend({
        @property {Backgrid.Extension.PageHandle} pageHandle. The PageHandle
        class to use for rendering individual handles
     */
-    pageHandle: app.PageHandleView,
+    pageHandle: PageHandleView,
 
     /** @property */
     goBackFirstOnSort: true,
@@ -295,7 +252,7 @@ app.PaginatorView = Backbone.View.extend({
     initialize: function (options) {
       var self = this;
       self.controls = _.defaults(options.controls || {}, self.controls,
-                                 app.PaginatorView.prototype.controls);
+                                 PaginatorView.prototype.controls);
 
       _.extend(self, _.pick(options || {}, "windowSize", "pageHandle",
                             "slideScale", "goBackFirstOnSort",
