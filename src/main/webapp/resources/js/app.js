@@ -421,6 +421,73 @@ window.DetailView = commonView.extend({
     	if(typeof data == 'undefined')
     		return;
     	$(this.el).html(this.template(data.attributes));
+    	this.pageScript();
+    },
+    pageScript: function () {
+    	//rated star action
+        $('.detail-star').raty({
+        	 path: 'resources/img',
+        	 score: function() {
+        		    return $(this).attr('data-score');
+        	 },
+        	 click: function(score) {
+        		var userId = $("#userId").attr('data');
+        		if(typeof userId == 'undefined')
+        			alert("请先登录！");
+        		
+        		var itemId = $(this).attr('data');
+        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		
+        		$.ajax({
+                	url: url,
+                	type: 'POST',
+                	dataType: 'json',
+                    async: false
+                });
+	    	 }
+    	});
+    }
+});
+
+window.UserView = commonView.extend({
+	name: 'user',
+    initialize:function () {
+        this.template = Handlebars.compile($("#user-template").html());
+        
+        this.model = new ServerPaginatedCollection();
+    	this.model.url = "rs/user/page";
+    	this.model.state.pageSize = 30;
+        this.userGrid = new Backgrid.Grid({
+    	  columns: [{ name: "",  cell: "select-row", headerCell: "select-all"}, 
+    	            { name: "userID",  label: "ID", cell: "string", editable: false}, 
+    	            { name: "id", label: "Name", cell: "string", editable: false },
+    	            { name: "marked", label: "Marked", cell: "string", editable: false }],
+
+    	  collection: this.model
+    	});
+        
+        this.model.on("reset", this.renderCommon, this);
+        
+    },
+    event: {
+    	"click #userCrawl": "userCrawl"
+    },
+    userCrawl: function(e) {
+    	e.preventDefaults();
+    	var selectedModels = this.userGrid.getSelectedModels();
+    	console.log(selectedModels);
+    	return this;
+    },
+    loadData: function() {
+    	this.model.fetch({reset: true});
+    },
+    renderCommon:function () {
+    	$(this.el).html(this.template());
+    	$("#grid").append(this.userGrid.render().$el);
+    	$('#userPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
+    	
+    	
+    	
     }
 });
 
@@ -432,6 +499,7 @@ var AppRouter = Backbone.Router.extend({
         "recommend/:id":    "recommend",
         "movie/:id":    	"detail",
         "login#*q":			"login",
+        "users":			"users",
         "*path":			"main"
     },
     main:function () {
@@ -454,6 +522,10 @@ var AppRouter = Backbone.Router.extend({
     detail: function (id) {
         this.renderWhenReady(this.detailView);
     	this.detailView.loadData(id);
+    },
+    users: function () {
+    	this.renderWhenReady(this.userView);
+    	this.userView.loadData();
     },
     login: function (q) {
     	var params = parseQueryString(q);
@@ -489,6 +561,7 @@ var AppRouter = Backbone.Router.extend({
         this.movieView = new MovieView();
         this.recommendView = new RecommendView();
         this.detailView = new DetailView();
+        this.userView = new UserView();
         
         $('body').append(this.headView.render().el);
         // Close the search dropdown on click anywhere in the UI

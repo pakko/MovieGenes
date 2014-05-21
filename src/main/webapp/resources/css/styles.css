@@ -118,3 +118,7 @@ body {
     color:#fff !important;
     z-index:2;
 }
+
+.detail-star {
+    text-align:left;
+}
