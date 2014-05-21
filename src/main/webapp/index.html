@@ -18,38 +18,6 @@
 
 <body>
 
-<!-- Fixed navbar -->
-<div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="#"><b>Movie Genes</b></a>
-    </div>
-    <div class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-        <li class="home-menu active"><a href="#">首页</a></li>
-    	<li class="movie-menu"><a href="#movies">电影</a></li>
-    	<li class="recommend-menu"><a href="#recommend/3032305">推荐</a></li>
-    	<li class="about-menu"><a href="#about">关于</a></li>
-      </ul>
-      <form class="navbar-form navbar-right navbar-search pull-right dropdown" role="search">
-        <div class="form-group">
-          <input id="searchText" type="search" class="form-control search-query dropdown-toggle" placeholder="Search" autocomplete="off">
-        </div>
-      </form>
-      <ul class="nav navbar-nav navbar-right">
-	      <li><a id="userId" data="3032305"><img width="24px" height="24px" src="http://img3.douban.com/icon/u3032305-4.jpg"> pakko</a></li>
-      </ul>
-      
-    </div><!--/.nav-collapse -->
-  </div>
-</div>
-
 <div class="container">
     <div class="row">
         <div id="content" class="col-md-12>"></div>
@@ -62,6 +30,59 @@
     </footer>
 
 </div>
+
+<script id="head-template" type="text/x-handlebars-template">
+	<!-- Fixed navbar -->
+	<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	  <div class="container">
+	    <div class="navbar-header">
+	      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>
+	      <a class="navbar-brand" href="#"><b>Movie Genes</b></a>
+	    </div>
+	    <div class="navbar-collapse collapse">
+	      <ul class="nav navbar-nav">
+	        <li class="home-menu active"><a href="#">首页</a></li>
+	    	<li class="movie-menu"><a href="#movies">电影</a></li>
+			{{#if logined}}
+    		<li class="recommend-menu"><a href="#recommend/{{id}}">推荐</a></li>
+			{{/if}}
+	    	<li class="about-menu"><a href="#about">关于</a></li>
+	      </ul>
+	      <form class="navbar-form navbar-right navbar-search pull-right dropdown" role="search">
+	        <div class="form-group">
+	          <input id="searchText" type="search" class="form-control search-query dropdown-toggle" placeholder="Search" autocomplete="off">
+	        </div>
+	      </form>
+	      <ul class="nav navbar-nav navbar-right">
+		  {{#if logined}}
+		  	<li><a id="userId" data="{{id}}"><img width="24px" height="24px" src="{{avatar}}" /> {{name}}</a></li>
+		  {{else}}
+      	  	<li><a href="{{loginUrl}}"><img src="resources/img/login_with_douban_24.png" /></a></li>
+      	  {{/if}}
+	      </ul>
+	      
+	    </div><!--/.nav-collapse -->
+	  </div>
+	</div>
+</script>
+
+<script id="search-template" type="text/x-handlebars-template">
+	<ul class="dropdown-menu">
+		{{#each .}}
+		<li>
+		<a href='#movie/{{this.id}}'>
+		    <img width="50" height="50" src="resources/pics/Amy_Jones.jpg" style="float:left;margin-right: 10px;"/>
+		    <p>{{attributes.title}} <br/> {{attributes.rating}}</p>
+		</a>
+		</li>
+		{{/each}}
+	</ul>	
+</script>
 
 <script id="home-template" type="text/x-handlebars-template">
 	<div class="row jumbotron">
@@ -110,31 +131,20 @@
 	</div>
 </script>
 
-<script id="search-template" type="text/x-handlebars-template">
-<ul class="dropdown-menu">
-	<li>
-	<a href='#movie/{{this.id}}'>
-	    <img width="50" height="50" src="resources/pics/Amy_Jones.jpg" style="float:left;margin-right: 10px;"/>
-	    <p>{{this.title}} <br/> {{this.rating}}</p>
-	</a>
-	</li>
-</ul>	
-</script>
-
 <script id="movie-template" type="text/x-handlebars-template">
 	<div id="genres">
 		<ul class="nav nav-pills">
 		  {{#ifCond currentGenre '==' '所有'}}
-		  	<li class="genres active"><a href="#所有">所有</a></li>
+		  	<li class="movieGenres active"><a href="#所有">所有</a></li>
 		  {{else}}
-		  	<li class="genres"><a href="#所有">所有</a></li>
+		  	<li class="movieGenres"><a href="#所有">所有</a></li>
 		  {{/ifCond}}
 			  
 		  {{#each genres}}
 			  {{#ifCond ../currentGenre '==' this}}
-			  	<li class="genres active"><a href="#{{this}}">{{this}}</a></li>
+			  	<li class="movieGenres active"><a href="#{{this}}">{{this}}</a></li>
 			  {{else}}
-			  	<li class="genres"><a href="#{{this}}">{{this}}</a></li>
+			  	<li class="movieGenres"><a href="#{{this}}">{{this}}</a></li>
 			  {{/ifCond}}
 		  {{/each}}
 		</ul>
@@ -165,16 +175,16 @@
 	<div id="genres">
 		<ul class="nav nav-pills">
 		  {{#ifCond currentGenre '==' '所有'}}
-		  	<li class="genres2 active"><a href="#所有">所有</a></li>
+		  	<li class="recommendGenres active"><a href="#所有">所有</a></li>
 		  {{else}}
-		  	<li class="genres2"><a href="#所有">所有</a></li>
+		  	<li class="recommendGenres"><a href="#所有">所有</a></li>
 		  {{/ifCond}}
 			  
 		  {{#each genres}}
 			  {{#ifCond ../currentGenre '==' this}}
-			  	<li class="genres2 active"><a href="#{{this}}">{{this}}</a></li>
+			  	<li class="recommendGenres active"><a href="#{{this}}">{{this}}</a></li>
 			  {{else}}
-			  	<li class="genres2"><a href="#{{this}}">{{this}}</a></li>
+			  	<li class="recommendGenres"><a href="#{{this}}">{{this}}</a></li>
 			  {{/ifCond}}
 		  {{/each}}
 		</ul>
@@ -198,14 +208,24 @@
 						<a href='#movie/{{id}}'><img width="50px" height="70px" src="{{picUrl}}" title="{{title}}" /></a>
 					{{/each}}
 				</div>
+
+				{{#ifCond attributes.recommendItems.length '>' 4}}
+					<p><br><button class="btn btn-danger" data="{{../attributes.userName}}">更多</button></p>
+				{{/ifCond}}
 		    </dt>
 		    
 		    <dd>
-		    	<div class="recommend-movies">
+		    	<div class="row">
+
+				{{#if attributes.recommendItems}}
+
 				{{#each attributes.recommendItems}}
-				{{#ifCond @index '<=' 3}}
 					<div class="col-sm-4 col-md-2">
+					{{#ifCond @index '<=' 3}}
 						<div class="thumbnail">
+					{{else}}
+						<div class="thumbnail display-{{../../../attributes.userName}}" style="display: none;">
+					{{/ifCond}}
 							<a class="plain" href='#movie/{{id}}'>
 							    <img src="{{picUrl}}"/>
 							</a>
@@ -215,22 +235,12 @@
 							</div>
 						</div>
 					</div>
-				{{else}}
-					<div class="col-sm-4 col-md-2">
-						<div class="thumbnail display-{{../attributes.userName}}" style="display: none;">
-							<a class="plain" href='#movie/{{id}}'>
-							    <img src="{{picUrl}}"/>
-							</a>
-							<div class="caption-star" data="0" data-score=""></div>
-							<div class="caption text-center">
-								<p class="title"><sup><span class="rate">{{rating}}</span></sup> {{title}} </p>
-							</div>
-						</div>
-					</div>
-				{{/ifCond}}
 				{{/each}}
+
+				{{else}}
+					<p style="line-height: 239px; padding-left: 50px; align: center; vertical-align: middle;">No data.</p>
+				{{/if}}
 				
-				<!--<p style="line-height: 239px; vertical-align: middle;"><button class="btn" data="">More...</button></p>-->
 				</div>
 			</dd>
 		</dl>
@@ -241,6 +251,41 @@
 	<div id="recommendPagination"></div>	
 
 </script>
+
+<script id="detail-template" type="text/x-handlebars-template">
+	<div id="details" class="col-md-7">
+		<p><a href="http://movie.douban.com/subject/{{dbID}}"><img src="resources/pics/Amy_Jones.jpg" width="160" height="160" class="thumbnail"/></a></p>
+		<h3><a href="http://movie.douban.com/subject/{{dbID}}">{{title}}</a></h3>
+		<br>
+		<table class="table table-striped">
+		    <tr>
+		        <td>评分:</td>
+		        <td style="color:red;">{{rating}}</td>
+		    </tr>
+		    <tr>
+		    	<td>类型:</td>
+		        <td>{{genres}}</td>
+		    </tr>
+		</table>
+		
+		<div class="alert alert-warning">
+		  <h4 class="alert-heading">Warning</h4>
+		  The info...
+		</div>
+	
+	</div>
+	<div class="col-md-5">
+	    <div id="reports" class="well">
+	        <h3 class="modal-header">Related Movies</h3>
+			
+	        <div class="alert alert-info no-reports">
+	            <h4 class="alert-heading">Info</h4>
+	            {{title}} has no direct reports
+	        </div>
+	    </div>
+	</div>
+</script>
+
 
 <script src="resources/lib/jquery-1.9.1.min.js"></script>
 <script src="resources/lib/jquery.cookie.js"></script>

@@ -88,14 +88,12 @@ body {
 	overflow: hidden;
 	text-overflow: ellipsis; 
 }
-.recommend-movies {
-	white-space: nowrap; 
-	overflow: hidden;
-	text-overflow: ellipsis; 
+
+.dl-horizontal {
+	border-bottom: solid 1px #eee;
 }
 
 #recommend-head {
-	display: none;
 	padding-left: 10px;
 	align: right;
 	color: grey;

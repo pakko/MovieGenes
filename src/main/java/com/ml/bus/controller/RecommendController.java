@@ -89,7 +89,10 @@ public class RecommendController {
 				if(genres.equals("所有"))
 					recommendMovies.addAll(movies);
 				else {
-					if(movies.get(0).getGenres().contains(genres))
+					List<String> theGenres = movies.get(0).getGenres();
+					if(theGenres == null || theGenres.size() <= 0)
+						continue;
+					if(theGenres.contains(genres))
 						recommendMovies.addAll(movies);
 				}
 				
