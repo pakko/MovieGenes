@@ -6,7 +6,8 @@ window.Movie = Backbone.Model.extend({
 });
 
 window.MovieCollection = Backbone.Collection.extend({
-	url: 'rs/movie/search'
+	url: 'rs/movie/search',
+	model: Movie
 });
 
 window.ServerPaginatedCollection = Backbone.PageableCollection.extend({

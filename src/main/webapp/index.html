@@ -5,6 +5,7 @@
     <title>Movie Genes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="resources/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="resources/css/backgrid.min.css" rel="stylesheet">
     <link href="resources/css/styles.css" rel="stylesheet">
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -41,6 +42,7 @@
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
 	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
 	      </button>
 	      <a class="navbar-brand" href="#"><b>Movie Genes</b></a>
 	    </div>
@@ -50,7 +52,9 @@
 	    	<li class="movie-menu"><a href="#movies">电影</a></li>
 			{{#if logined}}
     		<li class="recommend-menu"><a href="#recommend/{{id}}">推荐</a></li>
+    		<li class="my-menu"><a href="#my/{{id}}">我的</a></li>
 			{{/if}}
+			<li class="user-menu"><a href="#users">用户</a></li>
 	    	<li class="about-menu"><a href="#about">关于</a></li>
 	      </ul>
 	      <form class="navbar-form navbar-right navbar-search pull-right dropdown" role="search">
@@ -76,7 +80,11 @@
 		{{#each .}}
 		<li>
 		<a href='#movie/{{this.id}}'>
+			{{#if attributes.picUrl}}
+		    <img width="50" height="50" src="{{attributes.picUrl}}" style="float:left;margin-right: 10px;"/>
+		    {{else}}
 		    <img width="50" height="50" src="resources/pics/Amy_Jones.jpg" style="float:left;margin-right: 10px;"/>
+		    {{/if}}
 		    <p>{{attributes.title}} <br/> {{attributes.rating}}</p>
 		</a>
 		</li>
@@ -158,7 +166,7 @@
 				<a class="plain" href='#movie/{{attributes.id}}'>
 				    <img src="{{attributes.picUrl}}"/>
 				</a>
-				<div class="caption-star" data="0" data-score=""></div>
+				<div class="caption-star" data="{{attributes.id}}" data-score=""></div>
 				<div class="caption text-center">
 					<p class="title"><sup><span class="rate">{{attributes.rating}}</span></sup> {{attributes.title}} </p>
 				</div>
@@ -210,7 +218,7 @@
 				</div>
 
 				{{#ifCond attributes.recommendItems.length '>' 4}}
-					<p><br><button class="btn btn-danger" data="{{../attributes.userName}}">更多</button></p>
+					<p><br><button class="btn btn-danger moreRecommend" data="{{../attributes.userName}}">更多</button></p>
 				{{/ifCond}}
 		    </dt>
 		    
@@ -229,7 +237,7 @@
 							<a class="plain" href='#movie/{{id}}'>
 							    <img src="{{picUrl}}"/>
 							</a>
-							<div class="caption-star" data="0" data-score=""></div>
+							<div class="caption-star" data="{{id}}" data-score=""></div>
 							<div class="caption text-center">
 								<p class="title"><sup><span class="rate">{{rating}}</span></sup> {{title}} </p>
 							</div>
@@ -254,8 +262,15 @@
 
 <script id="detail-template" type="text/x-handlebars-template">
 	<div id="details" class="col-md-7">
-		<p><a href="http://movie.douban.com/subject/{{dbID}}"><img src="resources/pics/Amy_Jones.jpg" width="160" height="160" class="thumbnail"/></a></p>
+		<p>
+			{{#if picUrl}}
+		    <img src="{{picUrl}}" width="180px" height="267px" class="thumbnail"/>
+		    {{else}}
+		    <img src="resources/pics/Amy_Jones.jpg" width="180px" height="267px" class="thumbnail"/>
+		    {{/if}}
+	    </p>
 		<h3><a href="http://movie.douban.com/subject/{{dbID}}">{{title}}</a></h3>
+		<p>您的评分: <div class="detail-star" data="{{id}}" data-score=""></div></p>
 		<br>
 		<table class="table table-striped">
 		    <tr>
@@ -267,11 +282,6 @@
 		        <td>{{genres}}</td>
 		    </tr>
 		</table>
-		
-		<div class="alert alert-warning">
-		  <h4 class="alert-heading">Warning</h4>
-		  The info...
-		</div>
 	
 	</div>
 	<div class="col-md-5">
@@ -286,6 +296,27 @@
 	</div>
 </script>
 
+<script id="user-template" type="text/x-handlebars-template">
+	<button class="btn btn-danger userCrawl">提交</button>
+	<div id="userGrid"></div>
+	<div id="userPagination"></div>
+</script>
+
+<script id="my-template" type="text/x-handlebars-template">
+	<div id="myList" class="row">
+		<table class="table table-condensed table-hover">
+		{{#each .}}
+		    <tr>
+				<!--<img src="{{attributes.movie.picUrl}}" width="66px" height="100px" title="{{attributes.movie.title}}"/>-->
+				<td><a href="#movie/{{attributes.movie.id}}">{{attributes.movie.title}}</a></td>
+				<td><div class="my-star" data="{{attributes.movie.id}}" data-score="{{attributes.rating}}"></div></td>
+				<td>{{formatDate attributes.timestamp}}</td>
+		    </tr>
+		{{/each}}
+		</table>
+	</div>
+	<div id="myPagination"></div>
+</script>
 
 <script src="resources/lib/jquery-1.9.1.min.js"></script>
 <script src="resources/lib/jquery.cookie.js"></script>
@@ -296,6 +327,8 @@
 <script src="resources/lib/backbone.paginator.js"></script>
 <script src="resources/bootstrap/js/bootstrap.js"></script>
 <script src="resources/lib/handlebars-v1.3.0.js"></script>
+<script src="resources/lib/backgrid.min.js"></script>
+<script src="resources/lib/backgrid-select-all.min.js"></script>
 
 <script src="resources/js/movie.js"></script>
 <script src="resources/js/app.js"></script>

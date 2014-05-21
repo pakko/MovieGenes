@@ -90,7 +90,7 @@ body {
 }
 
 .dl-horizontal {
-	border-bottom: solid 1px #eee;
+	border-bottom: dashed 1px #eee;
 }
 
 #recommend-head {
@@ -117,4 +117,10 @@ body {
     vertical-align: middle;
     color:#fff !important;
     z-index:2;
+}
+
+#myGrid {
+	width: 60%;
+	margin: 0 auto;  
+	text-align:center; 
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ml.bus.service.UserDataCrawler;
@@ -108,6 +109,31 @@ public class CrawlController {
 	    	System.out.println(newUser);
 	    	baseDB.save(newUser, Constants.dbUserCollectionName);
     	}*/
+    	
+		return "{\"success\": \"ok\"}";
+    }
+    
+    @RequestMapping(value = "/crawlRatingLists", method = RequestMethod.POST, produces = "application/json")
+    public @ResponseBody String crawlRatingLists(
+    		@RequestParam(value = "ids[]", required = false) String[] ids) {
+    	
+    	for(String id: ids) {
+    		try{
+	    		userDataCrawler.crawlRatingList(baseDB, id);
+	    		
+	    		Query query = new Query();
+	    		query.addCriteria(Criteria.where("userID").is(id));
+	    		List<DoubanUser> users = baseDB.find(query, DoubanUser.class, Constants.dbUserCollectionName);
+	    		if(users.size() <= 0)
+	    			continue;
+	    		baseDB.delete(users.get(0), Constants.dbUserCollectionName);
+		    	DoubanUser newUser = new DoubanUser(users.get(0).getId(), -2, id);
+		    	System.out.println(newUser);
+		    	baseDB.save(newUser, Constants.dbUserCollectionName);
+    		} catch (Exception e) {
+    			System.err.println("Error id: " + id + ", erro info: " + e.getMessage());
+    		}
+    	}
     	
 		return "{\"success\": \"ok\"}";
     }

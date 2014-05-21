@@ -31,4 +31,8 @@ public class UserService {
 		return userDAO.findByPage(pager);
 	}
 	
+	public Pagination findRatedByPageAndId(Pagination pager, String userID) {
+		return userDAO.findRatedByPageAndId(pager, userID);
+	}
+	
 }

@@ -73,7 +73,7 @@ public class UserDataTranslater {
 			//2, add ratings
 			Long userID = Long.parseLong(userMap.get(drm.getUserID()));
 			Long movieID = Long.parseLong(movie.getId());
-			Double rating = drm.getDoubanRate();
+			Double rating = drm.getUserRate();
 			Long timestamp = drm.getTimestamp();
 			UserRattedMovies urm = new UserRattedMovies(userID, movieID, rating, timestamp);
 			ratingsToBeAddList.add(urm);

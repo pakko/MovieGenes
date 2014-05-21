@@ -313,7 +313,7 @@ window.RecommendView = commonView.extend({
     },
     events: {
         "click .recommendGenres": 	"changeGenres",
-        "click button": 			"showMore"
+        "click .moreRecommend": 	"showMore"
     },
     changeGenres: function(e) {
     	e.preventDefault();
@@ -331,7 +331,6 @@ window.RecommendView = commonView.extend({
     showMore: function(e) {
     	e.preventDefault();
     	var data = $(e.currentTarget).attr('data');
-    	console.log(data);
     	if ($('.display-' + data).is(":hidden") == true) {
     		$('.display-' + data).show();
 	    }
@@ -421,6 +420,136 @@ window.DetailView = commonView.extend({
     	if(typeof data == 'undefined')
     		return;
     	$(this.el).html(this.template(data.attributes));
+    	this.pageScript();
+    },
+    pageScript: function () {
+    	//rated star action
+        $('.detail-star').raty({
+        	 path: 'resources/img',
+        	 score: function() {
+        		    return $(this).attr('data-score');
+        	 },
+        	 click: function(score) {
+        		var userId = $("#userId").attr('data');
+        		if(typeof userId == 'undefined')
+        			alert("请先登录！");
+        		
+        		var itemId = $(this).attr('data');
+        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		
+        		$.ajax({
+                	url: url,
+                	type: 'POST',
+                	dataType: 'json',
+                    async: false
+                });
+	    	 }
+    	});
+    }
+});
+
+window.UserView = commonView.extend({
+	name: 'user',
+    initialize:function () {
+        this.template = Handlebars.compile($("#user-template").html());
+        
+        this.model = new ServerPaginatedCollection();
+    	
+        this.userGrid = new Backgrid.Grid({
+    	  columns: [{ name: "userID",  cell: "select-row", headerCell: "select-all"}, 
+    	            { name: "userID",  label: "ID", cell: "string", editable: false}, 
+    	            { name: "id", label: "Name", cell: "string", editable: false },
+    	            { name: "marked", label: "Marked", cell: "string", editable: false }],
+
+    	  collection: this.model
+    	});
+        
+        this.model.on("reset", this.renderCommon, this);
+        
+    },
+    events: {
+        "click .userCrawl": 	"userCrawl"
+    },
+    userCrawl: function(e) {
+    	e.preventDefault();
+    	
+    	var selectedModels = this.userGrid.getSelectedModels();
+    	var vals = new Array();
+    	_.each(selectedModels, function(val) {
+    		vals.push(val.attributes.userID);
+        });
+    	
+    	$.ajax({
+        	url: 'rs/crawl/crawlRatingLists',
+        	type: 'POST',
+        	data: {'ids': vals},
+        	dataType: 'json'
+        });
+    	
+    	return this;
+    },
+    loadData: function() {
+    	this.model.url = "rs/user/page";
+    	this.model.queryParams.sortField = "marked";
+    	this.model.state.pageSize = 30;
+    	this.model.fetch({reset: true});
+    },
+    renderCommon:function () {
+    	$(this.el).html(this.template());
+    	$("#userGrid").append(this.userGrid.render().$el);
+    	$('#userPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
+    }
+});
+
+window.MyView = commonView.extend({
+	name: 'my',
+    initialize:function () {
+        this.template = Handlebars.compile($("#my-template").html());
+        this.model = new ServerPaginatedCollection();
+        this.model.on("reset", this.renderCommon, this);
+    },
+    loadData: function(id) {
+    	this.model.url = "rs/user/" + id + "/rated";
+    	this.model.queryParams.sortField = "timestamp";
+    	this.model.state.pageSize = 20;
+    	this.model.fetch({reset: true});
+    },
+    renderCommon:function () {
+    	if(typeof this.model == 'undefined')
+    		return;
+        this.$el.html(this.template(this.model.models));
+        	
+    	$('#myPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
+    	this.pageScript();
+    },
+    pageScript: function () {
+    	//rated star action
+        $('.my-star').raty({
+        	 path: 'resources/img',
+        	 score: function() {
+        		    return $(this).attr('data-score');
+        	 },
+        	 click: function(score) {
+        		var userId = $("#userId").attr('data');
+        		if(typeof userId == 'undefined')
+        			alert("请先登录！");
+        		
+        		var itemId = $(this).attr('data');
+        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		
+        		$.ajax({
+                	url: url,
+                	type: 'POST',
+                	dataType: 'json',
+                    async: false
+                });
+	    	 }
+    	});
+        
+        //load default image
+        $('#myList', this.el).find("img").on("error", { self: self }, function (event) { 
+        	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
+        });
     }
 });
 
@@ -432,6 +561,8 @@ var AppRouter = Backbone.Router.extend({
         "recommend/:id":    "recommend",
         "movie/:id":    	"detail",
         "login#*q":			"login",
+        "users":			"users",
+        "my/:id":			"my",
         "*path":			"main"
     },
     main:function () {
@@ -454,6 +585,14 @@ var AppRouter = Backbone.Router.extend({
     detail: function (id) {
         this.renderWhenReady(this.detailView);
     	this.detailView.loadData(id);
+    },
+    users: function () {
+    	this.renderWhenReady(this.userView);
+    	this.userView.loadData();
+    },
+    my: function (id) {
+        this.renderWhenReady(this.myView);
+    	this.myView.loadData(id);
     },
     login: function (q) {
     	var params = parseQueryString(q);
@@ -489,6 +628,8 @@ var AppRouter = Backbone.Router.extend({
         this.movieView = new MovieView();
         this.recommendView = new RecommendView();
         this.detailView = new DetailView();
+        this.userView = new UserView();
+        this.myView = new MyView();
         
         $('body').append(this.headView.render().el);
         // Close the search dropdown on click anywhere in the UI
@@ -517,6 +658,10 @@ var AppRouter = Backbone.Router.extend({
                 default:
                     return options.inverse(this);
             }
+        });
+        Handlebars.registerHelper("formatDate", function(timestamp) {
+        	var date = new Date(timestamp);
+        	return date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate();
         });
     },
     
