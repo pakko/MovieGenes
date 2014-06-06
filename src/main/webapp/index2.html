@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Movie Genes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="www/mobile-angular-ui-base.min.css">
+    <link rel="stylesheet" href="www/mobile-angular-ui-desktop.min.css">
+    <script src="www/angular.min.js"></script>
+    <script src="www/angular-route.min.js"></script>
+    <script src="www/mobile-angular-ui.min.js"></script>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+	
+	<!--<script src="http://use.edgefonts.net/source-sans-pro.js"></script>-->
+	
+</head>
+
+<body>
+
+<div class="container">
+    <div class="row">
+        <div id="content" class="col-md-12>"></div>
+    </div>
+    
+	<hr>
+
+    <footer>
+        <p>&copy; Pakko 2014. <a href="http://www.weibo.com/276775959">Follow me</a> on Weibo.</p>
+    </footer>
+
+</div>
+
+<script id="head-template" type="text/x-handlebars-template">
+	<!-- Fixed navbar -->
+	<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	  <div class="container">
+	    <div class="navbar-header">
+	      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>
+	      <a class="navbar-brand" href="#"><b>Movie Genes</b></a>
+	    </div>
+	    <div class="navbar-collapse collapse">
+	      <ul class="nav navbar-nav">
+	        <li class="home-menu active"><a href="#">首页</a></li>
+	    	<li class="movie-menu"><a href="#movies">电影</a></li>
+			{{#if logined}}
+    		<li class="recommend-menu"><a href="#recommend/{{id}}">推荐</a></li>
+    		<li class="my-menu"><a href="#my/{{id}}">我的</a></li>
+			{{/if}}
+			<li class="user-menu"><a href="#users">用户</a></li>
+	    	<li class="about-menu"><a href="#about">关于</a></li>
+	      </ul>
+	      <form class="navbar-form navbar-right navbar-search pull-right dropdown" role="search">
+	        <div class="form-group">
+	          <input id="searchText" type="search" class="form-control search-query dropdown-toggle" placeholder="Search" autocomplete="off">
+	        </div>
+	      </form>
+	      <ul class="nav navbar-nav navbar-right">
+		  {{#if logined}}
+		  	<li><a id="userId" data="{{id}}"><img width="24px" height="24px" src="{{avatar}}" /> {{name}}</a></li>
+		  {{else}}
+      	  	<li><a href="{{loginUrl}}"><img src="resources/img/login_with_douban_24.png" /></a></li>
+      	  {{/if}}
+	      </ul>
+	      
+	    </div><!--/.nav-collapse -->
+	  </div>
+	</div>
+</script>
+
+<script id="search-template" type="text/x-handlebars-template">
+	<ul class="dropdown-menu">
+		{{#each .}}
+		<li>
+		<a href='#movie/{{this.id}}'>
+			{{#if attributes.picUrl}}
+		    <img width="50" height="50" src="{{attributes.picUrl}}" style="float:left;margin-right: 10px;"/>
+		    {{else}}
+		    <img width="50" height="50" src="resources/pics/Amy_Jones.jpg" style="float:left;margin-right: 10px;"/>
+		    {{/if}}
+		    <p>{{attributes.title}} <br/> {{attributes.rating}}</p>
+		</a>
+		</li>
+		{{/each}}
+	</ul>	
+</script>
+
+<script id="home-template" type="text/x-handlebars-template">
+	<div class="row jumbotron">
+	    <div class="col-md-6">
+	        <img src="resources/img/logo.png">
+	    </div>
+	
+	    <div class="col-md-6">
+	        <h2>Welcome to MovieGenes</h2>
+	        <p>Movie Genes is a movie recommending engine.</p>
+	        <br><br><br><br><br><br>
+	        <p><a class="btn btn-lg btn-primary" href="#" role="button">Recommend &raquo;</a></p>
+	    </div>
+	</div>
+	
+	<div class="row">
+	    <div class="col-md-4">
+	        <h2></h2>
+	        <p></p>
+	        <p><a id="showMeBtn" class="btn" href="#"></a></p>
+	    </div>
+	</div>
+</script>
+
+<script id="about-template" type="text/x-handlebars-template">
+	<div class="row">
+	    <div class="col-md-4 text-center">
+	        <img src="resources/img/twitter.jpg" width="100"><br/><br/>
+	        <p>Follow me on Weibo<br/>
+	        <a href="http://www.weibo.com/pakko73">@pakko73</a></p>
+	        <br/>
+	    </div>
+	
+	    <div class="col-md-4 text-center">
+	        <img src="resources/img/github.jpg" width="100"><br/><br/>
+	        <p>Watch me code on GitHub<br/>
+	        <a href="http://ccoenraets.org">https://github.com/pakko</a></p>
+	        <br/>
+	    </div>
+	
+	    <div class="col-md-4 text-center">
+	        <img src="resources/img/blog.jpg" width="100"><br/><br/>
+	        <p>Visit my blog<br/><a href="http://pakko.org">http://pakko.org</a></p>
+	        <br/>
+	    </div>
+	</div>
+</script>
+
+<script id="movie-template" type="text/x-handlebars-template">
+	<div id="genres">
+		<ul class="nav nav-pills">
+		  {{#ifCond currentGenre '==' '所有'}}
+		  	<li class="movieGenres active"><a href="#所有">所有</a></li>
+		  {{else}}
+		  	<li class="movieGenres"><a href="#所有">所有</a></li>
+		  {{/ifCond}}
+			  
+		  {{#each genres}}
+			  {{#ifCond ../currentGenre '==' this}}
+			  	<li class="movieGenres active"><a href="#{{this}}">{{this}}</a></li>
+			  {{else}}
+			  	<li class="movieGenres"><a href="#{{this}}">{{this}}</a></li>
+			  {{/ifCond}}
+		  {{/each}}
+		</ul>
+	</div>
+	<hr>
+
+	<div id="movieList" class="row">
+		{{#each data}}
+		<div class="col-sm-4 col-md-2">
+			<div class="thumbnail">
+				<a class="plain" href='#movie/{{attributes.id}}'>
+				    <img src="{{attributes.picUrl}}"/>
+				</a>
+				<div class="caption-star" data="{{attributes.id}}" data-score=""></div>
+				<div class="caption text-center">
+					<p class="title"><sup><span class="rate">{{attributes.rating}}</span></sup> {{attributes.title}} </p>
+				</div>
+			</div>
+		</div>
+		{{/each}}
+	</div>
+
+	<div id="moviePagination"></div>	
+
+</script>
+
+<script id="recommend-template" type="text/x-handlebars-template">
+	<div id="genres">
+		<ul class="nav nav-pills">
+		  {{#ifCond currentGenre '==' '所有'}}
+		  	<li class="recommendGenres active"><a href="#所有">所有</a></li>
+		  {{else}}
+		  	<li class="recommendGenres"><a href="#所有">所有</a></li>
+		  {{/ifCond}}
+			  
+		  {{#each genres}}
+			  {{#ifCond ../currentGenre '==' this}}
+			  	<li class="recommendGenres active"><a href="#{{this}}">{{this}}</a></li>
+			  {{else}}
+			  	<li class="recommendGenres"><a href="#{{this}}">{{this}}</a></li>
+			  {{/ifCond}}
+		  {{/each}}
+		</ul>
+	</div>
+	<hr>
+
+	<div id="recommendList" class="row">
+		<div id="recommend-head">
+			<p><b>推荐规则</b>：选出与您相似的用户，并推荐他们喜欢且您未看过的电影</p>
+			<hr>
+		</div>
+
+		{{#each data}}
+		<dl class="dl-horizontal">
+		    <dt>
+			    <p>用户<span style="color: blue;">{{attributes.userName}}</span></p>
+			    <p>与您的相似度<span style="color: red;">{{attributes.userSimilarity}}</span></p>
+			    <p>共同看过的电影: </p>
+			    <div class="common-movies">
+					{{#each attributes.commons}}
+						<a href='#movie/{{id}}'><img width="50px" height="70px" src="{{picUrl}}" title="{{title}}" /></a>
+					{{/each}}
+				</div>
+
+				{{#ifCond attributes.recommendItems.length '>' 4}}
+					<p><br><button class="btn btn-danger moreRecommend" data="{{../attributes.userName}}">更多</button></p>
+				{{/ifCond}}
+		    </dt>
+		    
+		    <dd>
+		    	<div class="row">
+
+				{{#if attributes.recommendItems}}
+
+				{{#each attributes.recommendItems}}
+					<div class="col-sm-4 col-md-2">
+					{{#ifCond @index '<=' 3}}
+						<div class="thumbnail">
+					{{else}}
+						<div class="thumbnail display-{{../../../attributes.userName}}" style="display: none;">
+					{{/ifCond}}
+							<a class="plain" href='#movie/{{id}}'>
+							    <img src="{{picUrl}}"/>
+							</a>
+							<div class="caption-star" data="{{id}}" data-score=""></div>
+							<div class="caption text-center">
+								<p class="title"><sup><span class="rate">{{rating}}</span></sup> {{title}} </p>
+							</div>
+						</div>
+					</div>
+				{{/each}}
+
+				{{else}}
+					<p style="line-height: 239px; padding-left: 50px; align: center; vertical-align: middle;">No data.</p>
+				{{/if}}
+				
+				</div>
+			</dd>
+		</dl>
+		{{/each}}
+
+	</div>
+
+	<div id="recommendPagination"></div>	
+
+</script>
+
+<script id="detail-template" type="text/x-handlebars-template">
+	<div id="details" class="col-md-7">
+		<p>
+			{{#if picUrl}}
+		    <img src="{{picUrl}}" width="180px" height="267px" class="thumbnail"/>
+		    {{else}}
+		    <img src="resources/pics/Amy_Jones.jpg" width="180px" height="267px" class="thumbnail"/>
+		    {{/if}}
+	    </p>
+		<h3><a href="http://movie.douban.com/subject/{{dbID}}">{{title}}</a></h3>
+		<p>您的评分: <div class="detail-star" data="{{id}}" data-score=""></div></p>
+		<br>
+		<table class="table table-striped">
+		    <tr>
+		        <td>评分:</td>
+		        <td style="color:red;">{{rating}}</td>
+		    </tr>
+		    <tr>
+		    	<td>类型:</td>
+		        <td>{{genres}}</td>
+		    </tr>
+		</table>
+	
+	</div>
+	<div class="col-md-5">
+	    <div id="reports" class="well">
+	        <h3 class="modal-header">Related Movies</h3>
+			
+	        <div class="alert alert-info no-reports">
+	            <h4 class="alert-heading">Info</h4>
+	            {{title}} has no direct reports
+	        </div>
+	    </div>
+	</div>
+</script>
+
+<script id="user-template" type="text/x-handlebars-template">
+	<button class="btn btn-danger userCrawl">提交</button>
+	<div id="userGrid"></div>
+	<div id="userPagination"></div>
+</script>
+
+<script id="my-template" type="text/x-handlebars-template">
+	<div id="myList" class="row">
+		<table class="table table-condensed table-hover">
+		{{#each .}}
+		    <tr>
+				<!--<img src="{{attributes.movie.picUrl}}" width="66px" height="100px" title="{{attributes.movie.title}}"/>-->
+				<td><a href="#movie/{{attributes.movie.id}}">{{attributes.movie.title}}</a></td>
+				<td><div class="my-star" data="{{attributes.movie.id}}" data-score="{{attributes.rating}}"></div></td>
+				<td>{{formatDate attributes.timestamp}}</td>
+		    </tr>
+		{{/each}}
+		</table>
+	</div>
+	<div id="myPagination"></div>
+</script>
+
+<script src="resources/lib/jquery-1.9.1.min.js"></script>
+<script src="resources/lib/jquery.cookie.js"></script>
+<script src="resources/lib/jquery.raty.js"></script>
+
+<script src="resources/lib/underscore-min.js"></script>
+<script src="resources/lib/backbone-min.js"></script>
+<script src="resources/lib/backbone.paginator.js"></script>
+<script src="resources/bootstrap/js/bootstrap.js"></script>
+<script src="resources/lib/handlebars-v1.3.0.js"></script>
+<script src="resources/lib/backgrid.min.js"></script>
+<script src="resources/lib/backgrid-select-all.min.js"></script>
+
+<script src="resources/js/movie.js"></script>
+<script src="resources/js/app.js"></script>
+<!--<script src="resources/js/views/common.js"></script>
+<script src="resources/js/views/movie.js"></script>
+<script src="resources/js/views/recommend.js"></script>-->
+
+
+
+<!-- SELECT ONE (AND ONLY ONE) OF THE DATA PERSISTENCE SOLUTIONS BELOW -->
+
+<!-- Uncomment the script below to access the application data using an in-memory data store 
+<script src="resources/js/models/model-in-memory.js"></script>-->
+
+<!-- Uncomment the script below to access the application data using RESTful services. Open model-rest.js and adjust the URL attributes to reflect your URL endpoints. -->
+<!--<script src="js/models/model-rest.js"></script>-->
+
+<!-- Uncomment the script below to access the application data using RESTful services with JSONP. Open model-rest.js and adjust the URL attributes to reflect your REST endpoints. 
+<script src="resources/js/models/model-rest-jsonp.js"></script>-->
+
+<!-- Uncomment the two scripts below to use Parse.com as the data persistence layer. -->
+<!--<script src="lib/parse-1.2.2.min.js"></script>-->
+<!--<script src="js/models/model-parse-com.js"></script>-->
+
+</body>
+</html>
