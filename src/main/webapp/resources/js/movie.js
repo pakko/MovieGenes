@@ -1,12 +1,14 @@
+window.BACKEND_URL = "http://localhost:8203/";
+
 window.Movie = Backbone.Model.extend({
-	urlRoot:"rs/movie/",
+	urlRoot: BACKEND_URL + "rs/movie/",
     initialize:function () {
         this.url = this.urlRoot + "/" + this.id;
     }
 });
 
 window.MovieCollection = Backbone.Collection.extend({
-	url: 'rs/movie/search',
+	url: BACKEND_URL + "rs/movie/search",
 	model: Movie
 });
 

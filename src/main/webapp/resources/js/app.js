@@ -94,7 +94,7 @@ window.HeadView = Backbone.View.extend({
         
         var AUTHORIZATION_URL = 'https://www.douban.com/service/auth2/auth';
         var api = { apiKey: '0c30729c836d5bf4249157d58a4813dc', apiSecret: '3925b34a145e3415' };
-        var callbackUrl = "http://localhost:8203/#login";
+        var callbackUrl = BACKEND_URL + "#login";
         var params = $.param({ client_id: api.apiKey,
         	redirect_uri: callbackUrl,
         	response_type: 'token',
@@ -176,7 +176,7 @@ window.MovieView = commonView.extend({
     initGenres: function() {
     	var self = this;
     	$.ajax({
-        	url: 'rs/movie/genres',
+        	url: BACKEND_URL + 'rs/movie/genres',
         	type: 'GET',
         	dataType: 'json',
             async: false,
@@ -189,7 +189,7 @@ window.MovieView = commonView.extend({
     	if(this.loaded)
     		return;
     	this.model = new ServerPaginatedCollection();
-    	this.model.urlRoot = "rs/movie";
+    	this.model.urlRoot = BACKEND_URL + "rs/movie";
     	this.model.state.pageSize = 18;
 		this.genre = "所有";
     	this.model.setGenres(this.genre);
@@ -237,7 +237,7 @@ window.MovieView = commonView.extend({
         			alert("请先登录！");
         		
         		var itemId = $(this).attr('data');
-        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
         		
         		$.ajax({
                 	url: url,
@@ -289,7 +289,7 @@ window.RecommendView = commonView.extend({
     initGenres: function() {
     	var self = this;
     	$.ajax({
-        	url: 'rs/movie/genres',
+        	url: BACKEND_URL + 'rs/movie/genres',
         	type: 'GET',
         	dataType: 'json',
             async: false,
@@ -303,7 +303,7 @@ window.RecommendView = commonView.extend({
     		return;
     	this.model = new ServerPaginatedCollection();
 		
-    	this.model.urlRoot = "rs/recommend/user/" + id + "/items";
+    	this.model.urlRoot = BACKEND_URL + "rs/recommend/user/" + id + "/items";
     	this.model.state.pageSize = 10;
 		this.genre = "所有";
     	this.model.setGenres(this.genre);
@@ -362,7 +362,7 @@ window.RecommendView = commonView.extend({
         			alert("请先登录！");
         		
         		var itemId = $(this).attr('data');
-        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
         		
         		$.ajax({
                 	url: url,
@@ -435,7 +435,7 @@ window.DetailView = commonView.extend({
         			alert("请先登录！");
         		
         		var itemId = $(this).attr('data');
-        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
         		
         		$.ajax({
                 	url: url,
@@ -480,7 +480,7 @@ window.UserView = commonView.extend({
         });
     	
     	$.ajax({
-        	url: 'rs/crawl/crawlRatingLists',
+        	url: BACKEND_URL + 'rs/crawl/crawlRatingLists',
         	type: 'POST',
         	data: {'ids': vals},
         	dataType: 'json'
@@ -489,7 +489,7 @@ window.UserView = commonView.extend({
     	return this;
     },
     loadData: function() {
-    	this.model.url = "rs/user/page";
+    	this.model.url = BACKEND_URL + "rs/user/page";
     	this.model.queryParams.sortField = "marked";
     	this.model.state.pageSize = 30;
     	this.model.fetch({reset: true});
@@ -509,7 +509,7 @@ window.MyView = commonView.extend({
         this.model.on("reset", this.renderCommon, this);
     },
     loadData: function(id) {
-    	this.model.url = "rs/user/" + id + "/rated";
+    	this.model.url = BACKEND_URL + "rs/user/" + id + "/rated";
     	this.model.queryParams.sortField = "timestamp";
     	this.model.state.pageSize = 20;
     	this.model.fetch({reset: true});
@@ -535,7 +535,7 @@ window.MyView = commonView.extend({
         			alert("请先登录！");
         		
         		var itemId = $(this).attr('data');
-        		var url = 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
         		
         		$.ajax({
                 	url: url,
@@ -599,7 +599,7 @@ var AppRouter = Backbone.Router.extend({
     	//var params = {access_token: "c2fae6bd88c6850748f0b4389a538f15"};
     	var self = this;
         $.ajax({
-        	url: 'rs/user?access_token=' + params.access_token,
+        	url: BACKEND_URL + 'rs/user?access_token=' + params.access_token,
         	type: 'GET',
         	dataType: 'json',
             async: false,
