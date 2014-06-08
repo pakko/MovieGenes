@@ -39,7 +39,8 @@ window.ServerPaginatedCollection = Backbone.PageableCollection.extend({
 window.PageHandleView = Backbone.View.extend({
 
     /** @property */
-    tagName: "li",
+    tagName: "button",
+    className: "btn btn-negative btn-block",
 
     /** @property */
     events: {
@@ -165,7 +166,7 @@ window.PageHandleView = Backbone.View.extend({
       if (!$el.hasClass("active") && !$el.hasClass("disabled")) {
         if (this.isRewind) col.getFirstPage({reset:true});
         else if (this.isBack) col.getPreviousPage({reset:true});
-        else if (this.isForward) col.getNextPage({reset:true});
+        else if (this.isForward) col.getNextPage();
         else if (this.isFastForward) col.getLastPage({reset:true});
         else col.getPage(this.pageIndex, {reset: true});
       }
@@ -174,20 +175,7 @@ window.PageHandleView = Backbone.View.extend({
 
   });
 
-  /**
-     Paginator is a Backgrid extension that renders a series of configurable
-     pagination handles. This extension is best used for splitting a large data
-     set across multiple pages. If the number of pages is larger then a
-     threshold, which is set to 10 by default, the page handles are rendered
-     within a sliding window, plus the rewind, back, forward and fast forward
-     control handles. The individual control handles can be turned off.
-
-     @class Backgrid.Extension.Paginator
-  */
 window.PaginatorView = Backbone.View.extend({
-
-    /** @property */
-    className: "backgrid-paginator",
 
     /** @property */
     windowSize: 10,
@@ -218,11 +206,11 @@ window.PaginatorView = Backbone.View.extend({
         title: "First"
       },
       back: {
-        label: "<",
+        label: "前进",
         title: "Previous"
       },
       forward: {
-        label: ">",
+        label: "更多",
         title: "Next"
       },
       fastForward: {
@@ -352,7 +340,9 @@ window.PaginatorView = Backbone.View.extend({
       }
 
       var controls = this.controls;
-      _.each(["back", "rewind", "forward", "fastForward"], function (key) {
+      _.each(["forward", "back", "fastForward", "rewind"], function (key) {
+    	  if(typeof this.options.control[key] != 'undefined')
+    		  return;
         var value = controls[key];
         if (value) {
           var handleCtorOpts = {
@@ -384,12 +374,13 @@ window.PaginatorView = Backbone.View.extend({
 
       var handles = this.handles = this.makeHandles();
 
-      var ul = document.createElement("ul");
+      //var ul = document.createElement("ul");
       for (var i = 0; i < handles.length; i++) {
-        ul.appendChild(handles[i].render().el);
+        //ul.appendChild(handles[i].render().el);
+    	this.el.appendChild(handles[i].render().el);
       }
 
-      this.el.appendChild(ul);
+      //this.el.appendChild(ul);
 
       return this;
     }

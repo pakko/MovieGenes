@@ -1,29 +1,20 @@
 var commonView = Backbone.View.extend({
     template:null, //handlebars template of the view
     templateData:{}, //data to be used while rendering the template
-    el:$('#content'), //jquery element to render view into
+    el:$('.content'), //jquery element to render view into
     initialize:function () {    //compile view template
     },
     dateChanged:function () {    //called when user changes the date selected
         this.renderCommon();
     },
     appChanged:function () {    //called when user changes selected app from the sidebar
-        /*countlyEvent.reset();
-
-        var self = this;
-        $.when(countlyEvent.initialize()).then(function() {
-           self.render();
-        });*/
     },
     beforeRender: function () {
         return true;
     },
     afterRender: function() {},
     render:function () {    //backbone.js view render function
-    	$("#content-top").html("");
-        $(this.el).html('<div id="content-loader"></div>');
-        
-        this.renderCommon();
+    	this.renderCommon();
         this.afterRender();
         app.pageScript();
 
@@ -90,6 +81,7 @@ $.extend(Template.prototype, {
 window.HeadView = Backbone.View.extend({
 	initialize: function () {
         this.headTemplate = Handlebars.compile($("#head-template").html());
+        this.bottomTemplate = Handlebars.compile($("#bottom-template").html());
         this.searchTemplate = Handlebars.compile($("#search-template").html());
         
         var AUTHORIZATION_URL = 'https://www.douban.com/service/auth2/auth';
@@ -113,7 +105,8 @@ window.HeadView = Backbone.View.extend({
     },
     render: function () {
     	this.data = $.cookie("loginData") ? JSON.parse($.cookie("loginData")) : {loginUrl: this.authorizationUrl};
-    	this.$el.html(this.headTemplate(this.data));
+    	$('#head_nav').html(this.headTemplate(this.data));
+    	$('#bottom_nav').html(this.bottomTemplate(this.data));
     	
         return this;
     },
@@ -128,7 +121,6 @@ window.HeadView = Backbone.View.extend({
     search: function (event) {
         var key = $('#searchText').val();
         this.searchResults.fetch({reset: true, data: {name: key}});
-        var self = this;
         setTimeout(function () {
             $('.dropdown').addClass('open');
         });
@@ -139,7 +131,7 @@ window.HeadView = Backbone.View.extend({
         }
     },
     selectMenuItem: function(menuItem) {
-        $('.navbar .nav li').removeClass('active');
+        $('nav.bar a').removeClass('active');
         if (menuItem) {
             $('.' + menuItem + '-menu').addClass('active');
         }
@@ -169,9 +161,12 @@ window.AboutView = commonView.extend({
 window.MovieView = commonView.extend({
 	name: 'movie',
     initialize:function () {
-    	this.template = Handlebars.compile($("#movie-template").html());
-    	this.initGenres();
+    	this.movieTemplate = Handlebars.compile($("#movie-template").html());
+    	this.movieItemTemplate = Handlebars.compile($("#movieItem-template").html());
+
+    	//this.initGenres();
     	this.loaded = false;
+    	this.genres = ["动作","冒险","动画","传记","喜剧","犯罪","纪录片","剧情","家庭","奇幻","黑色幽默","史诗","恐怖","音乐","歌舞","悬疑","浪漫","科幻","体育","惊悚","战争","西部"];
     },
     initGenres: function() {
     	var self = this;
@@ -184,11 +179,13 @@ window.MovieView = commonView.extend({
             	self.genres = data;
             }
         });
+    	
     },
     loadData: function() {
     	if(this.loaded)
     		return;
     	this.model = new ServerPaginatedCollection();
+    	this.model.type = "movie";
     	this.model.urlRoot = BACKEND_URL + "rs/movie";
     	this.model.state.pageSize = 18;
 		this.genre = "所有";
@@ -196,9 +193,20 @@ window.MovieView = commonView.extend({
     	this.model.fetch({reset: true});
     	this.loaded = true;
     	this.model.on("reset", this.renderCommon, this);
+    	this.count = 0;
+    	this.model.on("add", this.addMovies, this);
+    },
+    addMovies: function(data) {
+    	if(this.count == this.model.models.length - 1) {
+    		this.appendMovies();
+    		this.count = 0;
+    	}
+    	this.count++;
     },
     events: {
-        "click .movieGenres": 	"changeGenres"
+        "click .movieGenres": 	"changeGenres",
+        "click .showGenres": "showGenes",
+        "click .closeGenes": "closeGenes"
     },
     changeGenres: function(e) {
     	e.preventDefault();
@@ -212,6 +220,16 @@ window.MovieView = commonView.extend({
 		this.genre = temp;
     	this.model.setGenres(this.genre);
     	this.model.fetch({reset: true});
+    	return this;
+    },
+    showGenes: function(e) {
+    	e.preventDefault();
+    	$('#genesModal').addClass('active');
+    	return this;
+    },
+    closeGenes: function(e) {
+    	e.preventDefault();
+    	$('#genesModal').removeClass('active');
     	return this;
     },
     pageScript: function () {
@@ -233,48 +251,79 @@ window.MovieView = commonView.extend({
         	 },
         	 click: function(score) {
         		var userId = $("#userId").attr('data');
-        		if(typeof userId == 'undefined')
+        		if(typeof userId != 'undefined') {
+        			var itemId = $(this).attr('data');
+            		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+            		
+            		$.ajax({
+                    	url: url,
+                    	type: 'POST',
+                    	dataType: 'json',
+                        async: false
+                    });
+        		}
+        		else
         			alert("请先登录！");
-        		
-        		var itemId = $(this).attr('data');
-        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
-        		
-        		$.ajax({
-                	url: url,
-                	type: 'POST',
-                	dataType: 'json',
-                    async: false
-                });
 	    	 }
     	});
         
-      //resize image
-        $('#movieList', this.el).find(".plain img").on("load", { self: self }, function (event) { 
-        	$(event.currentTarget).css("width", "108px"); 
-        	$(event.currentTarget).css("height", "160px");
+        //resize image
+        $('#movieList', this.el).find(".plain img").on("load", function (event) { 
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$(event.currentTarget).css("width", width); 
+        	$(event.currentTarget).css("height", height);
+        });
+        $('#movieList', this.el).find(".caption-star img").on("load", function (event) { 
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$(event.currentTarget).css("width", width / 7); 
+        	$(event.currentTarget).css("height", height / 7);
+        });
+        $( window ).resize(function() {
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$('#movieList').find(".plain img").each( function (index, element) { 
+            	$(element).css("width", width); 
+            	$(element).css("height", height);
+            });
+        	$('#movieList').find(".caption-star img").each( function (index, element) { 
+            	$(element).css("width", width / 7); 
+            	$(element).css("height", width / 7);
+            });
         });
         //load default image
-        $('#movieList', this.el).find(".plain img").on("error", { self: self }, function (event) { 
+        $('#movieList', this.el).find(".plain img").on("error", function (event) { 
         	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
         });
     },
-    
+    appendMovies: function () {
+    	$('#movieList ul', this.el).append(this.movieItemTemplate(this.model.models));
+    	
+    	//show pagination
+    	$('#moviePagination', this.el).html(new PaginatorView({
+    		collection: this.model,
+    		renderIndexedPageHandles: false,
+            control: {
+              rewind: null,
+              fastForward: null,
+              back: null
+            }
+    	}).render().el);
+    	
+    	this.pageScript();
+    },
     renderCommon:function () {
     	if(typeof this.model == 'undefined')
     		return;
     	
     	this.templateData = {
     		"currentGenre": this.genre,
-			"genres": this.genres,
-			"data": this.model.models
+			"genres": this.genres
     	};
-    	this.$el.html(this.template(this.templateData));
+    	this.$el.html(this.movieTemplate(this.templateData));
+    	this.appendMovies();
     	
-    	//show pagination
-    	$('#moviePagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
-    	
-        this.pageScript();
-        
         return this;
     }
 });
@@ -282,9 +331,12 @@ window.MovieView = commonView.extend({
 window.RecommendView = commonView.extend({
 	name: 'recommend',
     initialize:function () {
-    	this.template = Handlebars.compile($("#recommend-template").html());
-    	this.initGenres();
+    	this.recommendTemplate = Handlebars.compile($("#recommend-template").html());
+    	this.recommendItemTemplate = Handlebars.compile($("#recommendItem-template").html());
+
+    	//this.initGenres();
     	this.loaded = false;
+    	this.genres = ["动作","冒险","动画","传记","喜剧","犯罪","纪录片","剧情","家庭","奇幻","黑色幽默","史诗","恐怖","音乐","歌舞","悬疑","浪漫","科幻","体育","惊悚","战争","西部"];
     },
     initGenres: function() {
     	var self = this;
@@ -302,7 +354,7 @@ window.RecommendView = commonView.extend({
     	if(this.loaded)
     		return;
     	this.model = new ServerPaginatedCollection();
-		
+    	this.model.type = "recommend";
     	this.model.urlRoot = BACKEND_URL + "rs/recommend/user/" + id + "/items";
     	this.model.state.pageSize = 10;
 		this.genre = "所有";
@@ -310,10 +362,22 @@ window.RecommendView = commonView.extend({
     	this.model.fetch({reset: true});
     	this.loaded = true;
     	this.model.on("reset", this.renderCommon, this);
+    	this.count = 0;
+    	this.model.on("add", this.addMovies, this);
+    },
+    addMovies: function(data) {
+    	if(this.count == this.model.models.length - 1) {
+    		this.appendMovies();
+    		this.count = 0;
+    	}
+    	this.count++;
     },
     events: {
         "click .recommendGenres": 	"changeGenres",
-        "click .moreRecommend": 	"showMore"
+        "click .showRecommend": 	"showRecommend",
+        "click .closeRecommend": 	"closeRecommend",
+        "click .showGenres": "showGenes",
+        "click .closeGenes": "closeGenes"
     },
     changeGenres: function(e) {
     	e.preventDefault();
@@ -328,15 +392,26 @@ window.RecommendView = commonView.extend({
     	this.model.fetch({reset: true});
     	return this;
     },
-    showMore: function(e) {
+    showGenes: function(e) {
+    	e.preventDefault();
+    	$('#genesModal').addClass('active');
+    	return this;
+    },
+    closeGenes: function(e) {
+    	e.preventDefault();
+    	$('#genesModal').removeClass('active');
+    	return this;
+    },
+    showRecommend: function(e) {
     	e.preventDefault();
     	var data = $(e.currentTarget).attr('data');
-    	if ($('.display-' + data).is(":hidden") == true) {
-    		$('.display-' + data).show();
-	    }
-	    else {
-	    	$('.display-' + data).hide();
-	    }
+    	$('#' + data).addClass('active');
+    	return this;
+    },
+    closeRecommend: function(e) {
+    	e.preventDefault();
+    	var data = $(e.currentTarget).attr('data');
+    	$('#' + data).removeClass('active');
     	return this;
     },
     pageScript: function () {
@@ -357,31 +432,68 @@ window.RecommendView = commonView.extend({
         		    return $(this).attr('data-score');
         	 },
         	 click: function(score) {
-        		var userId = $("#userId").attr('data');
-        		if(typeof userId == 'undefined')
-        			alert("请先登录！");
-        		
-        		var itemId = $(this).attr('data');
-        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
-        		
-        		$.ajax({
-                	url: url,
-                	type: 'POST',
-                	dataType: 'json',
-                    async: false
-                });
-	    	 }
+         		var userId = $("#userId").attr('data');
+         		if(typeof userId != 'undefined') {
+         			var itemId = $(this).attr('data');
+             		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+             		
+             		$.ajax({
+                     	url: url,
+                     	type: 'POST',
+                     	dataType: 'json',
+                         async: false
+                     });
+         		}
+         		else
+         			alert("请先登录！");
+ 	    	 }
     	});
         
-        //resize image
-        $('#recommendList', this.el).find(".plain img").on("load", { self: self }, function (event) { 
-        	$(event.currentTarget).css("width", "108px"); 
-        	$(event.currentTarget).css("height", "160px");
+      //resize image
+        $('#recommendList', this.el).find(".plain img").on("load", function (event) { 
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$(event.currentTarget).css("width", width); 
+        	$(event.currentTarget).css("height", height);
+        });
+        $('#recommendList', this.el).find(".caption-star img").on("load", function (event) { 
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$(event.currentTarget).css("width", width / 7); 
+        	$(event.currentTarget).css("height", height / 7);
+        });
+        $( window ).resize(function() {
+        	var width = $(window).width() / 4;
+        	var height = width * 1.2;
+        	$('#recommendList').find(".plain img").each( function (index, element) { 
+            	$(element).css("width", width); 
+            	$(element).css("height", height);
+            });
+        	$('#recommendList').find(".caption-star img").each( function (index, element) { 
+            	$(element).css("width", width / 7); 
+            	$(element).css("height", width / 7);
+            });
         });
         //load default image
         $('#recommendList', this.el).find(".plain img").on("error", { self: self }, function (event) { 
         	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
         });
+    },
+    appendMovies: function () {
+    	$('#recommendList ul', this.el).append(this.recommendItemTemplate(this.model.models));
+    	
+    	//show pagination
+    	$('#recommendPagination', this.el).html(new PaginatorView({
+    		collection: this.model,
+    		renderIndexedPageHandles: false,
+            control: {
+              rewind: null,
+              fastForward: null,
+              back: null
+            }
+    	}).render().el);
+    	
+    	this.pageScript();
     },
     renderCommon:function () {
     	if(typeof this.model == 'undefined')
@@ -389,15 +501,10 @@ window.RecommendView = commonView.extend({
     	
     	this.templateData = {
     		"currentGenre": this.genre,
-			"genres": this.genres,
-			"data": this.model.models
+			"genres": this.genres
     	};
-    	this.$el.html(this.template(this.templateData));
-        
-    	//show pagination
-    	$('#recommendPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
-    	
-        this.pageScript();
+    	this.$el.html(this.recommendTemplate(this.templateData));
+    	this.appendMovies();
         
         return this;
     }
@@ -425,26 +532,28 @@ window.DetailView = commonView.extend({
     pageScript: function () {
     	//rated star action
         $('.detail-star').raty({
-        	 path: 'resources/img',
-        	 score: function() {
-        		    return $(this).attr('data-score');
-        	 },
-        	 click: function(score) {
-        		var userId = $("#userId").attr('data');
-        		if(typeof userId == 'undefined')
-        			alert("请先登录！");
-        		
-        		var itemId = $(this).attr('data');
-        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
-        		
-        		$.ajax({
-                	url: url,
-                	type: 'POST',
-                	dataType: 'json',
-                    async: false
-                });
-	    	 }
-    	});
+	       	 width: '100%',
+	       	 path: 'resources/img',
+	       	 score: function() {
+	       		    return $(this).attr('data-score');
+	       	 },
+	       	 click: function(score) {
+	        		var userId = $("#userId").attr('data');
+	        		if(typeof userId != 'undefined') {
+	        			var itemId = $(this).attr('data');
+	            		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+	            		
+	            		$.ajax({
+	                    	url: url,
+	                    	type: 'POST',
+	                    	dataType: 'json',
+	                        async: false
+	                    });
+	        		}
+	        		else
+	        			alert("请先登录！");
+		    	 }
+	   	});
     }
 });
 
@@ -465,7 +574,15 @@ window.UserView = commonView.extend({
     	});
         
         this.model.on("reset", this.renderCommon, this);
-        
+        this.count = 0;
+    	this.model.on("add", this.addUser, this);
+    },
+    addUser: function(data) {
+    	if(this.count == this.model.models.length - 1) {
+    		this.appendUsers();
+    		this.count = 0;
+    	}
+    	this.count++;
     },
     events: {
         "click .userCrawl": 	"userCrawl"
@@ -491,63 +608,97 @@ window.UserView = commonView.extend({
     loadData: function() {
     	this.model.url = BACKEND_URL + "rs/user/page";
     	this.model.queryParams.sortField = "marked";
-    	this.model.state.pageSize = 30;
+    	this.model.state.pageSize = 8;
     	this.model.fetch({reset: true});
+    },
+    appendUsers: function () {
+    	$("#userGrid", this.el).append(this.userGrid.render().$el);
+    	$('#userPagination', this.el).html(new PaginatorView({
+    		collection: this.model,
+    		renderIndexedPageHandles: false,
+            control: {
+              rewind: null,
+              fastForward: null,
+            }
+    	}).render().el);
     },
     renderCommon:function () {
     	$(this.el).html(this.template());
-    	$("#userGrid").append(this.userGrid.render().$el);
-    	$('#userPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
+    	this.appendUsers();
     }
+    
 });
 
 window.MyView = commonView.extend({
 	name: 'my',
     initialize:function () {
-        this.template = Handlebars.compile($("#my-template").html());
-        this.model = new ServerPaginatedCollection();
-        this.model.on("reset", this.renderCommon, this);
+        this.myTemplate = Handlebars.compile($("#my-template").html());
+        this.myItemTemplate = Handlebars.compile($("#myItem-template").html());
     },
     loadData: function(id) {
+    	this.model = new ServerPaginatedCollection();
     	this.model.url = BACKEND_URL + "rs/user/" + id + "/rated";
     	this.model.queryParams.sortField = "timestamp";
-    	this.model.state.pageSize = 20;
+    	this.model.state.pageSize = 5;
     	this.model.fetch({reset: true});
+    	this.model.on("reset", this.renderCommon, this);
+        this.count = 0;
+    	this.model.on("add", this.addMys, this);
+    },
+    addMys: function(data) {
+    	if(this.count == this.model.models.length - 1) {
+    		this.renderMys();
+    		this.count = 0;
+    	}
+    	this.count++;
+    },
+    renderMys: function () {
+    	$('#myList ul.table-view', this.el).append(this.myItemTemplate(this.model.models));
+    	$('#myPagination', this.el).html(new PaginatorView({
+    		collection: this.model,
+    		renderIndexedPageHandles: false,
+            control: {
+              rewind: null,
+              fastForward: null,
+              back: null
+            }
+    	}).render().el);
+    	this.pageScript();
     },
     renderCommon:function () {
     	if(typeof this.model == 'undefined')
     		return;
-        this.$el.html(this.template(this.model.models));
-        	
-    	$('#myPagination', this.el).html(new PaginatorView({collection: this.model}).render().el);
-    	this.pageScript();
+        this.$el.html(this.myTemplate());
+        this.renderMys();
     },
     pageScript: function () {
     	//rated star action
-        $('.my-star').raty({
-        	 path: 'resources/img',
-        	 score: function() {
-        		    return $(this).attr('data-score');
-        	 },
-        	 click: function(score) {
-        		var userId = $("#userId").attr('data');
-        		if(typeof userId == 'undefined')
-        			alert("请先登录！");
-        		
-        		var itemId = $(this).attr('data');
-        		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
-        		
-        		$.ajax({
-                	url: url,
-                	type: 'POST',
-                	dataType: 'json',
-                    async: false
-                });
-	    	 }
-    	});
+    	$('.my-star').raty({
+	       	 width: '100%',
+	       	 path: 'resources/img',
+	       	 score: function() {
+	       		    return $(this).attr('data-score');
+	       	 },
+	       	 click: function(score) {
+	        		var userId = $("#userId").attr('data');
+	        		if(typeof userId != 'undefined') {
+	        			var itemId = $(this).attr('data');
+	            		var url = BACKEND_URL + 'rs/preferences/' + userId + '/' + itemId + '/' + score;
+	            		
+	            		$.ajax({
+	                    	url: url,
+	                    	type: 'POST',
+	                    	dataType: 'json',
+	                        async: false
+	                    });
+	        		}
+	        		else
+	        			alert("请先登录！");
+		    	 }
+	   	});
         
         //load default image
-        $('#myList', this.el).find("img").on("error", { self: self }, function (event) { 
+        $('#myList', this.el).find("img").on("error", function (event) { 
         	$(this).attr("src", "resources/pics/Amy_Jones.jpg");
         });
     }
@@ -563,7 +714,7 @@ var AppRouter = Backbone.Router.extend({
         "login#*q":			"login",
         "users":			"users",
         "my/:id":			"my",
-        "*path":			"main"
+        //"*path":			"main"
     },
     main:function () {
         this.navigate("", true);
@@ -662,6 +813,13 @@ var AppRouter = Backbone.Router.extend({
         Handlebars.registerHelper("formatDate", function(timestamp) {
         	var date = new Date(timestamp);
         	return date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate();
+        });
+        Handlebars.registerHelper("mod", function(v1, isBegin, v2, options) {
+        	if(!isBegin)
+        		v1 += 1;
+        	if(v1 % v2 == 0)
+        		return options.fn(this);
+        	return options.inverse(this);
         });
     },
     

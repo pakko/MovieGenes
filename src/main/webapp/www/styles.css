@@ -1,0 +1,101 @@
+body {
+    font-family: Verdana;
+    font-size: 12px;
+    padding-top: 70px;
+    padding-bottom: 40px;
+}
+
+.dropdown-menu {
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    width: 300px;
+}
+
+.no-reports {
+    display: none;
+}
+
+.m_title {
+	width: 70px;
+	font-size: 12px;
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis; 
+}
+
+.rate {
+	color: red;
+}
+
+.plain img{
+    max-height: 160px; max-width: 108px; 
+	width: expression(this.width > 108px && this.width > this.height ? 108px : auto); 
+	height: expression(this.height > 160px ? 160px : auto); 
+}
+
+.common-movies {
+	white-space: nowrap; 
+	overflow: hidden;
+	text-overflow: ellipsis; 
+}
+
+.dl-horizontal {
+	border-bottom: dashed 1px #eee;
+}
+
+#recommend-head {
+	padding-left: 10px;
+	align: right;
+	color: grey;
+	font-size: 24px;
+}
+
+.thumbnail {
+    position:relative;
+    overflow:hidden;
+    float: left;
+    padding: 0 3px;
+}
+ 
+.caption-star {
+    position:absolute;
+    bottom: 0; 
+    left: 0;
+    background:rgba(66, 139, 202, 0.75);
+    width:100%;
+    height:30%;
+    display: none;
+    text-align:center;
+    vertical-align: middle;
+    color:#fff !important;
+    z-index:2;
+}
+.caption-star img {
+	max-height: 16px; max-width: 16px; 
+	width: expression(this.width > 16px && this.width > this.height ? 16px : auto); 
+	height: expression(this.height > 16px ? 16px : auto); 
+}
+
+#myGrid {
+	width: 60%;
+	margin: 0 auto;  
+	text-align:center; 
+}
+
+.movie-view-cell {
+  padding: 11px 5px 11px 5px;
+}
+
+.pagination {
+	padding-bottom: 50px;
+}
+
+.content {
+	padding-top: 50px;
+}
+
+hr {
+	border:none;
+	border-top:1px solid #ddd;
+}
